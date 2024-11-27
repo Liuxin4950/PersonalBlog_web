@@ -1,0 +1,99 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "huohuo.moc3",
+		"Textures": [
+			"huohuo.8192/texture_00.png",
+			"huohuo.8192/texture_01.png",
+			"huohuo.8192/texture_02.png",
+			"huohuo.8192/texture_03.png"
+		],
+		"Physics": "huohuo.physics3.json",
+		"DisplayInfo": "huohuo.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "f00",
+				"File": "expressions/angry.exp3.json"
+			},
+			{
+				"Name": "f01",
+				"File": "expressions/baozhen.exp3.json"
+			},
+			{
+				"Name": "f02",
+				"File": "expressions/cry.exp3.json"
+			},
+			{
+				"Name": "f03",
+				"File": "expressions/qizi1.exp3.json"
+			},
+			{
+				"Name": "f04",
+				"File": "expressions/qizi2.exp3.json"
+			},
+			{
+				"Name": "f05",
+				"File": "expressions/white eyes.exp3.json"
+			}
+		],
+		"Motions": {
+			"Idle": [
+				{
+					"File": "motions/Scene1.motion3.json"
+				}
+			],
+			"sleep": [
+				{
+					"File": "motions/zhentou.motion3.json",
+					"Sound": "sounds/【开心_happy】真是惬意呀。.wav"
+				}
+			],
+			"yaotou": [
+				{
+					"File": "motions/yaotou.motion3.json",
+					"Sound": "sounds/【开心_happy】啊啊啊，别走别走，等等我…….wav"
+				}
+			],
+			"haoqi": [
+				{
+					"File": "motions/haoqi.motion3.json",
+					"Sound": "sounds/你好...我叫霍霍...很高兴认识你...wav"
+
+				}
+			],
+			"keshui": [
+				{
+					"File": "motions/keshui.motion3.json",
+					"Sound": "sounds/好想睡觉啊...撑不住了....wav"
+				}
+			],
+			"linghun": [
+				{
+					"File": "motions/linghun.motion3.json"
+				}
+			],
+			"qizi": [
+				{
+					"File": "motions/qizi.motion3.json"
+				}
+			],
+			"Scene1": [
+				{
+					"File": "motions/Scene1.motion3.json"
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		}
+	]
+}
