@@ -80,17 +80,15 @@
 import { ref } from 'vue';
 import axios from 'axios'; // 导入 axios
 import { createArticle } from '../../services/postService';
+import { uploadFile } from '@/services/uploadService';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router'; // 引入 useRouter
-
+import { useUserStore } from '@/store/userStore';
 const router = useRouter(); // 获取路由实例
-const users = localStorage.getItem('user');
+const userStore = useUserStore();
 
 // 检查数据是否存在并将其转换为 JSON 格式
-const usersJson = users ? JSON.parse(users) : null;
-
-console.log(usersJson);
-
+const usersJson = userStore.userInfo;
 // 初始化文章数据
 const article = ref({
     username: usersJson.username,
@@ -117,10 +115,8 @@ const uploadImage = async (event) => {
     formData.append('image', event.target.files[0]);
 
     try {
-        const response = await axios.post('http://localhost:8080/api/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        imageUrl.value = response.data.data; // 服务器返回的图片 URL
+        const response = await uploadFile(formData);
+        imageUrl.value = response.data; // 服务器返回的图片 URL
         console.log(response.data);
         if (imageUrl.value) {
             Swal.fire({

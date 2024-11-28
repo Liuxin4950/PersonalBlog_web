@@ -18,14 +18,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useUserStore } from '@/store/userStore';
 
 let user = ref(null); // 默认值为 null
 
 // 在组件加载时获取本地存储的用户信息
 onMounted(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user')); // 假设用户信息存储在 localStorage 中
-    if (storedUser) {
-        user.value = storedUser; // 设置为响应式数据
+    const userStore = useUserStore();
+
+    if (userStore) {
+        user.value = userStore.userInfo; // 设置为响应式数据
     }
 });
 

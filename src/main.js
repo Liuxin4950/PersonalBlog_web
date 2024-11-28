@@ -5,6 +5,7 @@ import '@/assets/css/font.css'
 import App from './App.vue';
 import router from './router';
 import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate' //引入持久化插件
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import Swal from 'sweetalert2'//用来做提示
@@ -12,6 +13,7 @@ import Particles from '@tsparticles/vue3'//粒子特效
 import { loadFull } from 'tsparticles'
 const app = createApp(App);
 const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate) //将插件添加到 pinia 实例上
 app.use(ElementPlus);
 app.use(router);
 app.use(pinia);

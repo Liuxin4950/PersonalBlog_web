@@ -16,23 +16,22 @@
                     <input type="tel" id="phone" v-model="profile.phone" :readonly="!isEditing" />
                 </div>
             </div>
+
             <div class="right-column">
                 <div class="form-group">
                     <label>当前头像:</label>
                     <div class="image-container">
-                        <div class="image-preview" v-if="profile.imageUrl">
-                            <img :src="profile.imageUrl" alt="头像预览" class="preview-image" />
+                        <div class="image-preview" v-if="profile.image_url">
+                            <img :src="profile.image_url" alt="头像预览" class="preview-image" />
                             <div class="overlay" v-if="isEditing">
                                 <label for="image-upload" class="upload-button">更换头像</label>
-                                <input id="image-upload" type="file" @change="uploadImage" style="display: none;" />
+                                <input id="image-upload" type="file" @change="uploadImage" style="display: none" />
                             </div>
                         </div>
                         <div v-else>
-
-
-                            <div class="" v-if="isEditing">
+                            <div v-if="isEditing">
                                 <label for="image-upload" class="upload-button">更换头像</label>
-                                <input id="image-upload" type="file" @change="uploadImage" style="display: none;" />
+                                <input id="image-upload" type="file" @change="uploadImage" style="display: none" />
                             </div>
                             <div v-else>暂无头像</div>
                         </div>
@@ -40,6 +39,7 @@
                 </div>
             </div>
         </div>
+
         <div class="action-buttons">
             <button v-if="!isEditing" @click="editProfile">编辑信息</button>
             <button v-if="isEditing" @click="saveProfile">保存更改</button>
@@ -50,110 +50,88 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useRoute, useRouter } from 'vue-router';
-import { GetUser } from '@/services/user';
+import { GetUser, putUser } from '@/services/user';
+import { uploadFile } from '@/services/uploadService';
+import { useUserStore } from '@/store/userStore';
 const route = useRoute();
-
 const router = useRouter();
+const userStore = useUserStore();
+
 // 个人信息数据
-const originalProfile = reactive({}); // 用于存储原始数据
+const originalProfile = reactive({});
 const profile = reactive({
     id: 0,
-    username: '测试用户', // 初始化测试数据
+    username: '测试用户',
     email: 'test@example.com',
     phone: '1234567890',
-    imageUrl: '', // 头像 URL
+    image_url: '', // 使用 image_url 而非 imageUrl
 });
 
-// 获取用户信息并更新 profile
-const getInfo = async (id) => {
+// 编辑状态
+const isEditing = ref(false);
+
+// 获取用户信息
+const fetchUserInfo = async (id) => {
     try {
         const res = await GetUser(id);
         const userData = res.data;
-        // 将 userData 转换为 JSON 字符串并存储到 localStorage
-        localStorage.setItem('user', JSON.stringify(userData));
+        console.log(userData);
+        if (userData != null || userData != undefined) {
+            userStore.setUserInfo(userData)
 
+        }
 
-        // 处理返回的数据，将 image_url 转换为 imageUrl
-        profile.id = userData.id
-        profile.username = userData.username;
-        profile.email = userData.email;
-        profile.phone = userData.phone;
-        profile.imageUrl = userData.image_url || ''; // 如果为 null，赋值为空字符串
+        Object.assign(profile, {
+            id: userData.id,
+            username: userData.username,
+            email: userData.email,
+            phone: userData.phone,
+            image_url: userData.image_url || '', // 确保返回的头像地址是 image_url
+        });
 
-        // 保存原始数据用于取消编辑时恢复
-        Object.assign(originalProfile, { ...profile });
+        Object.assign(originalProfile, { ...profile }); // 保存原始数据
     } catch (error) {
-        console.error('获取用户信息失败:', error);
+        handleError(error, '获取用户信息失败');
     }
 };
 
+// 初始化数据
 onMounted(() => {
-    getInfo(route.params.id);
+    fetchUserInfo(route.params.id);
 });
-
-// 编辑状态控制
-const isEditing = ref(false);
 
 // 编辑个人信息
 const editProfile = () => {
     isEditing.value = true;
 };
+
+// 保存个人信息
 const saveProfile = async () => {
     try {
-        // 调用后端接口保存更改
-        const response = await axios.put('http://localhost:8080/api/users/update', {
+        const response = await putUser({
             ...profile,
-            image_url: profile.imageUrl, // 将 imageUrl 转换为 image_url
+            image_url: profile.image_url, // 确保传递的是 image_url
         });
-        console.log(response.data);
 
-        if (response.data.code === 200) {
-            // 数据更新成功，获取最新的用户数据
-            await getInfo(route.params.id); // 确保更新后获取最新的数据
-
-            Swal.fire({
-                icon: 'success',
-                title: '个人信息修改成功！',
-                text: '您的信息已更新',
-                showCancelButton: true,  // 显示取消按钮
-                confirmButtonText: '修改完毕，返回首页',  // 确认按钮文本
-                cancelButtonText: '继续查看',  // 取消按钮文本
-                reverseButtons: true,  // 让按钮顺序反转
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // 点击了“修改完毕，返回首页”按钮，跳转到首页
-                    router.push({ name: 'Home' });  // 使用命名路由进行跳转
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    // 点击了“继续查看”按钮，不做跳转
-                    console.log('继续查看个人信息');
-                }
-            });
-
+        if (response.code === 200) {
+            await fetchUserInfo(route.params.id); // 获取最新的用户数据
+            showSuccessDialog('个人信息修改成功！', '您的信息已更新');
             isEditing.value = false;
-            // 更新原始数据为当前已保存的数据
             Object.assign(originalProfile, { ...profile });
         } else {
-            throw new Error(response.data.message);
+            throw new Error(response.message);
         }
     } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: '更新失败',
-            text: error.response?.data.message || error.message || '无法更新信息，请稍后重试',
-        });
+        handleError(error, '更新失败');
     }
 };
-
-
 
 // 取消编辑
 const cancelEdit = () => {
     isEditing.value = false;
-    // 恢复为原始数据
-    Object.assign(profile, { ...originalProfile });
+    Object.assign(profile, { ...originalProfile }); // 恢复原始数据
 };
 
 // 图片上传
@@ -171,10 +149,8 @@ const uploadImage = async (event) => {
     formData.append('image', event.target.files[0]);
 
     try {
-        const response = await axios.post('http://localhost:8080/api/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        profile.imageUrl = response.data.data; // 更新头像 URL
+        const response = await uploadFile(formData);
+        profile.image_url = response.data; // 更新头像 URL
         Swal.fire({
             icon: 'success',
             title: '头像上传成功！',
@@ -189,6 +165,31 @@ const uploadImage = async (event) => {
     }
 };
 
+// 错误处理函数
+const handleError = (error, message) => {
+    Swal.fire({
+        icon: 'error',
+        title: message,
+        text: error.response?.message || '无法更新信息，请稍后重试',
+    });
+};
+
+// 成功提示弹窗
+const showSuccessDialog = (title, text) => {
+    Swal.fire({
+        icon: 'success',
+        title,
+        text,
+        showCancelButton: true,
+        confirmButtonText: '修改完毕，返回首页',
+        cancelButtonText: '继续查看',
+        reverseButtons: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.push({ name: 'Home' });
+        }
+    });
+};
 </script>
 
 <style scoped>
@@ -259,7 +260,6 @@ const uploadImage = async (event) => {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    /* 半透明蒙层 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -269,7 +269,6 @@ const uploadImage = async (event) => {
 
 .image-preview:hover .overlay {
     opacity: 1;
-    /* 悬浮时显示 */
 }
 
 .upload-button {
@@ -285,12 +284,7 @@ const uploadImage = async (event) => {
 
 .upload-button:hover {
     background-color: #ff4977;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
+    color: white;
 }
 
 button {
@@ -302,6 +296,7 @@ button {
     background-color: #42b983;
     color: white;
     transition: background-color 0.3s;
+    margin-right: 1em;
 }
 
 button:hover {

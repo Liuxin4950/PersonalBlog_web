@@ -44,12 +44,14 @@ import { onMounted, computed, ref, onBeforeUnmount } from 'vue';
 import anime from 'animejs/lib/anime.es.js';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { useUserStore } from '@/store/userStore';
 
 // 获取路由实例
 const router = useRouter();
-const user = localStorage.getItem('user');
-const userStore = ref(user ? JSON.parse(user) : null);
 
+
+const user = useUserStore()
+const userStore = ref(user.userInfo)
 console.log(userStore.value);
 
 

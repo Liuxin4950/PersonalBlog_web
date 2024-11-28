@@ -52,8 +52,9 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useUserStore } from '@/store/user';
+import { useUserStore } from '@/store/userStore';
 import anime from 'animejs/lib/anime.es.js';
+// 统一管理仓库
 
 const isLogin = ref(true);
 const username = ref('');
@@ -65,18 +66,14 @@ const userStore = useUserStore();
 
 const toggleAuth = () => {
     isLogin.value = !isLogin.value;
-    // 清空输入框
     username.value = '';
     password.value = '';
     email.value = '';
     phone.value = '';
-
-    // 添加过渡效果
     animateForm();
 };
-
+//动画效果
 const animateForm = () => {
-    // 动画效果：盒子从小到大撑开
     anime({
         targets: '.login-container',
         width: isLogin.value ? '400px' : '500px', // 从400px变为500px（注册时更宽）
@@ -125,7 +122,11 @@ const handleSubmit = async () => {
         if (response.data.code === 200) {
             if (isLogin.value) {
                 localStorage.setItem('user', JSON.stringify(response.data.data));
-                userStore.setUser(response.data.data);
+                userStore.setUserInfo(response.data.data);
+                console.log(response.data.data.token);
+
+                userStore.setToken(response.data.data.token)
+
                 Swal.fire({
                     icon: 'success',
                     title: '登录成功',

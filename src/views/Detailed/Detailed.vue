@@ -5,34 +5,42 @@
         <div class="main">
             <!-- 文章列表 -->
             <el-card class="home-left" shadow="hover">
-                <!-- 加载状态或文章详情 -->
-                <div v-if="loading" class="loading">加载中...</div>
-                <div v-else>
-                    <div>
-                        <div class="f ac type">
-                            <div class="f ac">
-                                <el-image v-if="getCategoryIcon(article.category_id)"
-                                    :src="getCategoryIcon(article.category_id)" class="icon" alt="类别图标" />
-                                <h4>{{ article.category_name }}</h4>
-                            </div>
-                        </div>
-                        <h2 class="title">{{ article.title }}</h2>
-                        <div class="meta-info">
-                            <p class="summary">{{ article.summary }}</p>
-                            <div class="category">
-
-                                <div class="f ac">
-                                    <img class="header-avatar" :src="author.image_url" alt="无">
-                                    <div>作者: {{ author.username }}</div>
-                                </div>
-                                <span>{{ formatDate(article.created_at) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <el-image :src="article.image_url" class="article-image" fit="cover" alt="文章封面"
-                        style="border-radius: 6px; margin-top: 15px; max-height: 500px; width: 100%;" />
-                    <div class="text-content" id="markdown" v-html="articleContent"></div>
+                <div @click="reloadPage" class="cw" v-if="article.value === null">
+                    <img src="../../assets/image/work/network.png" alt="">
+                    <h3>网络错误！为返回数据。</h3>
+                    <h3>点击重试。</h3>
                 </div>
+                <div v-else>
+                    <div v-if="loading" class="loading">加载中...</div>
+                    <div v-else>
+                        <div>
+                            <div class="f ac type">
+                                <div class="f ac">
+                                    <el-image v-if="getCategoryIcon(article.category_id)"
+                                        :src="getCategoryIcon(article.category_id)" class="icon" alt="类别图标" />
+                                    <h4>{{ article.category_name }}</h4>
+                                </div>
+                            </div>
+                            <h2 class="title">{{ article.title }}</h2>
+                            <div class="meta-info">
+                                <p class="summary">{{ article.summary }}</p>
+                                <div class="category">
+
+                                    <div class="f ac">
+                                        <img class="header-avatar" :src="author.image_url" alt="无">
+                                        <div>作者: {{ author.username }}</div>
+                                    </div>
+                                    <span>{{ formatDate(article.created_at) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <el-image :src="article.image_url" class="article-image" fit="cover" alt="文章封面"
+                            style="border-radius: 6px; margin-top: 15px; max-height: 500px; width: 100%;" />
+                        <div class="text-content" id="markdown" v-html="articleContent"></div>
+                    </div>
+                </div>
+                <!-- 加载状态或文章详情 -->
+
             </el-card>
             <div class="home-right">
                 <SearchArticles></SearchArticles>
@@ -51,7 +59,7 @@ import { marked } from 'marked';
 import banner from '@/components/common/banner.vue';
 import CurrentPath from '@/components/common/CurrentPath.vue';
 import { GetUser } from '@/services/user';
-import { getPopularArticle } from '@/services/postService';
+import { getArticleDetail, getPopularArticle } from '@/services/postService';
 import jsIcon from '@/assets/image/icon/js.png';
 import shIcon from '@/assets/image/icon/sh.png';
 import fxIcon from '@/assets/image/icon/fx.png';
@@ -84,9 +92,13 @@ const formatDate = (timestamp) => {
 const fetchArticleDetail = async (id) => {
     loading.value = true;
     try {
-        const response = await axios.get(`http://localhost:8080/api/posts/${id}`);
-        if (response.data.code === 200) {
-            article.value = response.data.data;
+        // const response = await axios.get(`http://localhost:8080/api/posts/${id}`);
+        const response = await getArticleDetail(id);
+
+        if (response.code == 200) {
+            article.value = response.data;
+
+
             articleContent.value = marked(article.value.content);
 
             const userResponse = await GetUser(article.value.author_id);
@@ -122,9 +134,14 @@ watch(
         fetchArticleDetail(newId);
     }
 );
+
+const reloadPage = () => {
+    location.reload();//刷新页面
+}
+
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .content {
     max-width: 1340px;
     margin: 0 auto;
@@ -150,6 +167,16 @@ watch(
     display: flex;
     flex-direction: column;
     font-family: "dd";
+
+    .cw {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+
+        img {
+            width: 50%;
+        }
+    }
 }
 
 .home-right {
