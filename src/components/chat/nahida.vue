@@ -1,5 +1,11 @@
 <template>
     <div class="tool1">
+        <!-- 输入框和播放按钮 -->
+        <div class="input-container" @mouseenter="mouseOverButtons = true" @mouseleave="mouseOverButtons = false">
+            <input v-model="textInput" type="text" placeholder="请输入文本" class="input-box" />
+            <button @click="playAudio">播放音频</button>
+        </div>
+
         <!-- 使用 showButtons 来控制按钮显示 -->
         <div class="button1" v-if="showButtons" @mouseenter="mouseOverButtons = true"
             @mouseleave="mouseOverButtons = false">
@@ -17,6 +23,10 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import * as PIXI from "pixi.js";
 import { Live2DModel } from "pixi-live2d-display/cubism4";
+
+const textInput = ref('');  // 用于绑定输入框的值
+
+
 
 window.PIXI = PIXI;
 let app = null;
@@ -49,7 +59,6 @@ const buttons = [
     { label: "眨眼2", action: () => expression('f12') }    // Wink (第二种眨眼)
 ];
 
-
 // 加载和渲染 Live2D 模型
 onMounted(async () => {
     try {
@@ -70,6 +79,9 @@ onMounted(async () => {
         model.width = MODEL_WIDTH;
         model.height = MODEL_HEIGHT;
         model.position.set((MODEL_WIDTH - model.width) / 2, (MODEL_HEIGHT - model.height) / 2);
+
+        // 添加拖动功能
+        makeDraggable(model);
 
         console.log('模型加载成功');
         renderModel(); // 开始渲染
@@ -95,6 +107,37 @@ function renderModel() {
         app.renderer.render(app.stage);
         requestAnimationFrame(renderModel);
     }
+}
+
+function makeDraggable(model) {
+    model.interactive = true;
+    model.buttonMode = true;
+
+    model.on('pointerdown', (event) => {
+        model.dragging = true;
+        model.data = event.data;
+        model.offset = model.data.getLocalPosition(model.parent);
+        model.offset.x -= model.x;
+        model.offset.y -= model.y;
+    });
+
+    model.on('pointermove', () => {
+        if (model.dragging) {
+            const newPosition = model.data.getLocalPosition(model.parent);
+            model.x = newPosition.x - model.offset.x;
+            model.y = newPosition.y - model.offset.y;
+        }
+    });
+
+    model.on('pointerup', () => {
+        model.dragging = false;
+        model.data = null;
+    });
+
+    model.on('pointerupoutside', () => {
+        model.dragging = false;
+        model.data = null;
+    });
 }
 
 // 鼠标移动事件处理
@@ -145,9 +188,18 @@ function motion(type) {
         }
     }
 }
+function playAudio() {
+    console.log("触发音频动作");
+    model.internalModel.setParameterValue("ParamHeadYaw", 0.5);
+    model.internalModel.update();
+
+
+}
+
+
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 #box1 {
     display: block;
     margin: 0 auto;
@@ -166,22 +218,23 @@ function motion(type) {
 }
 
 .tool1 {
-    width: 250px;
-    height: 400px;
+    width: 400px;
+    height: 800px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
+    border: 1px solid #ccc;
 }
 
 .tool1 button {
     color: white;
-    width: 20px;
-    height: 20px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background-color: rgb(8, 177, 25);
-    font-size: 6px;
+    font-size: 14px;
     cursor: pointer;
     outline: none;
     transition: .5s;
@@ -193,5 +246,31 @@ function motion(type) {
     font-size: 6px;
     cursor: pointer;
     outline: none;
+}
+
+.input-container {
+    width: 100%;
+    height: 50px;
+    position: absolute;
+    top: 0;
+    /* 调整为你想要的位置 */
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+
+    button {
+        border-radius: 5px;
+        height: 100%;
+        font-size: 10px;
+    }
+}
+
+.input-box {
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 </style>
