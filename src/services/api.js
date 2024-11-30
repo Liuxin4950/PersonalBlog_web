@@ -35,22 +35,17 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
     (response) => {
-        // 在这里我们直接返回响应的 data
         return response.data;
     },
     (error) => {
-        // 错误的响应处理
         console.error('API 请求失败', error);
 
-        // 如果是 token 过期（比如 401 错误），可以做重新登录的处理
         if (error.response && error.response.status === 401) {
-            // 清除本地存储的 token
+            console.log("警告！token过期！");
             localStorage.removeItem('token');
-            // 使用 Vue Router 跳转到登录页面
-            router.push({ name: 'login' });  // 假设登录页面的 route 名为 'login'
+            router.push({ name: 'login' });
         }
 
-        // 根据实际情况可以展示提示消息或做其他处理
         return Promise.reject(error);
     }
 );
