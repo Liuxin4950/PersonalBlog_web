@@ -9,7 +9,61 @@
 			"Nahida_1080.1024/texture_03.png"
 		],
 		"Physics": "Nahida_1080.physics3.json",
-		"DisplayInfo": "Nahida_1080.cdi3.json"
+		"DisplayInfo": "Nahida_1080.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "f00",
+				"File": "Angry.exp3.json"
+			},
+			{
+				"Name": "f01",
+				"File": "black.exp3.json"
+			},
+			{
+				"Name": "f02",
+				"File": "Halfeyes.exp3.json"
+			},
+			{
+				"Name": "f03",
+				"File": "HandChange.exp3.json"
+			},
+			{
+				"Name": "f04",
+				"File": "Happy1.exp3.json"
+			},
+			{
+				"Name": "f05",
+				"File": "kusa.exp3.json"
+			},
+			{
+				"Name": "f06",
+				"File": "mouthchange.exp3.json"
+			},
+			{
+				"Name": "f07",
+				"File": "Sad1.exp3.json"
+			},
+			{
+				"Name": "f08",
+				"File": "Sad2.exp3.json"
+			},
+			{
+				"Name": "f09",
+				"File": "shy_normal.exp3.json"
+			},
+			{
+				"Name": "f10",
+				"File": "Shy.exp3.json"
+			},
+			{
+				"Name": "f11",
+				"File": "StarEye.exp3.json"
+			},
+			{
+				"Name": "f12",
+				"File": "Wink.exp3.json"
+			}
+		]
 	},
 	"Groups": [
 		{

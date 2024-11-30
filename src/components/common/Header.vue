@@ -17,10 +17,10 @@
           <img class="icon" src="../../assets/image/icon/关于我们.png" alt="About">
           <router-link to="/about" class="navbar-link" exact-active-class="active-link">About</router-link>
         </li>
-        <!-- <li class="navbar-item">
-          <img class="icon" src="../../assets/image/icon/关于我们.png" alt="About">
-          <router-link to="/info" class="navbar-link" exact-active-class="active-link">Info</router-link>
-        </li> -->
+        <li class="navbar-item">
+          <img class="icon" src="../../assets/image/icon/关于我们.png" alt="Nahida">
+          <router-link to="/chat/nahida" class="navbar-link" exact-active-class="active-link">Info</router-link>
+        </li>
 
         <li class="navbar-item navbar-user-container" @contextmenu.prevent="showMenu">
           <span class="navbar-user">
