@@ -102,6 +102,8 @@ const animateForm = () => {
 };
 
 const handleSubmit = async () => {
+    console.log("触发登录请求成功");
+
     try {
         const endpoint = isLogin.value
             ? 'http://localhost:8080/api/users/login'
@@ -116,15 +118,19 @@ const handleSubmit = async () => {
             payload.email = email.value;
             payload.phone = phone.value;
         }
-
+        console.log("发送请求信息:");
+        //取得用户信息
         const response = await axios.post(endpoint, payload);
+        console.log(response);
 
         if (response.data.code === 200) {
             if (isLogin.value) {
-                localStorage.setItem('user', JSON.stringify(response.data.data));
-                userStore.setUserInfo(response.data.data);
-                console.log(response.data.data.token);
+                console.log("Login页面提示：获取到用户信息:");
 
+                console.log(response.data.data.token);
+                //存储用户信息
+                userStore.setUserInfo(response.data.data);
+                //存储token
                 userStore.setToken(response.data.data.token)
 
                 Swal.fire({

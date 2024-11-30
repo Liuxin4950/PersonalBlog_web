@@ -11,18 +11,21 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
     (config) => {
-        const userStore = useUserStore();
-        const token = userStore.token;  // 使用可选链（Optional chaining）避免 null 或 undefined
-        console.log(token);
+        console.log("------------------已进入请求拦截器------------------");
 
+        const userStore = useUserStore();
+        const token = userStore.token;//从仓库获取token的值
         if (token) {
+            console.log("我有token,添加token成功！");
             config.headers['token'] = `${token}`;  // 如果有 token，添加到请求头
         } else {
-            // 如果没有 token，清除本地存储的 token 并跳转到登录页面
             console.log("没有 token，跳转到登录页面");
-            router.push({ name: 'login' });  // 假设登录页面的 route 名为 'login'
-            return Promise.reject('No token, redirecting to login');  // 终止请求
+            router.push({ name: 'login' });
+            return Promise.reject('没有 token，跳转到登录页面');  // 终止请求
         }
+        console.log("------------------已退出请求拦截器------------------");
+        console.log("");
+
         return config;
     },
     (error) => {
@@ -39,13 +42,40 @@ instance.interceptors.response.use(
     },
     (error) => {
         console.error('API 请求失败', error);
-
-        if (error.response && error.response.status === 401) {
-            console.log("警告！token过期！");
-            localStorage.removeItem('token');
-            router.push({ name: 'login' });
+        console.log("报错状态码:", error.response.status);
+        if (error.response) {
+            const status = error.response.status;
+            switch (status) {
+                case 401:
+                    console.log("警告！token过期！");
+                    router.push({ name: 'login' });
+                    break;
+                case 403:
+                    console.error('您没有权限访问此资源！');
+                    break;
+                case 404:
+                    console.error('请求的资源不存在！');
+                    break;
+                case 500:
+                    console.error('服务器开小差了，请稍后再试！');
+                    break;
+                default:
+                    console.error(`请求错误，状态码：${status}`);
+            }
+        }
+        //2.请求超时
+        if (error.code === 'ECONNABORTED') {
+            console.error('请求超时，请稍后重试！');
+        } else if (!error.response) {
+            console.error('网络未连接，请检查网络设置！');
         }
 
+        //3.链接重置
+        if (error.code === 'ERR_CONNECTION_RESET') {
+            console.error('服务器已断开，请稍后重试！');
+        } else if (!error.response) {
+            console.error('网络未连接，请检查网络设置！');
+        }
         return Promise.reject(error);
     }
 );

@@ -52,7 +52,7 @@ const router = useRouter();
 
 const user = useUserStore()
 const userStore = ref(user.userInfo)
-console.log(userStore.value);
+// console.log(userStore.value);
 
 
 const currentUser = computed(() => userStore.value ? userStore.value.username : null);

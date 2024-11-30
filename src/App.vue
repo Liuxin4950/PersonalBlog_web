@@ -1,10 +1,8 @@
 <template>
   <div>
-
+    <!-- 这里是加载动画显示逻辑 -->
     <Loading class="loading" v-if="isLoading" />
-
     <Index />
-    <!-- <huohuo></huohuo> -->
   </div>
 </template>
 
@@ -13,8 +11,6 @@ import { ref, onMounted, watch } from 'vue';
 import Index from './views/Index.vue';
 import { useRouter } from 'vue-router';
 const router = useRouter()
-console.log(router.currentRoute.value);
-
 
 watch(() => router.currentRoute.value, () => {
   isLoading.value = true; // 显示加载动画

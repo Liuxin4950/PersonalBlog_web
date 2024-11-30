@@ -1,11 +1,12 @@
 <template>
   <div>
+    <!-- 粒子特效 -->
     <ParticleBackground></ParticleBackground>
 
     <!-- 只有在非登录和注册页面显示Header -->
     <Header v-if="showHeader" />
 
-    <!-- 根据showHeader的值调整内容区域样式 -->
+    <!-- 所有路由页面显示的区域 -->
     <div class="content">
       <router-view />
     </div>
@@ -33,7 +34,6 @@ const showHeader = computed(() => {
 .content {
   width: 100%;
   height: 100vh;
-  /* 页面内容完全填充 */
   margin: 0 auto;
 }
 </style>
