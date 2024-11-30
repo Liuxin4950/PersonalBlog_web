@@ -1,276 +1,150 @@
 <template>
-    <div class="tool1">
-        <!-- 输入框和播放按钮 -->
-        <div class="input-container" @mouseenter="mouseOverButtons = true" @mouseleave="mouseOverButtons = false">
-            <input v-model="textInput" type="text" placeholder="请输入文本" class="input-box" />
-            <button @click="playAudio">播放音频</button>
+    <div>
+        <canvas id="canvas"></canvas>
+        <div id="control">
+            <div class="label">1、测试说话</div>
+            <button id="play">测试音频</button>
+            <br /><br />
+            <div class="label">2、调用接口生成音频</div>
+            <textarea v-model="text" style="width:400px;height:300px;">你好，欢迎光临</textarea>
+            <br /><br />
+            <button id="start">开始说话</button>
         </div>
-
-        <!-- 使用 showButtons 来控制按钮显示 -->
-        <div class="button1" v-if="showButtons" @mouseenter="mouseOverButtons = true"
-            @mouseleave="mouseOverButtons = false">
-            <template v-for="(button, index) in buttons" :key="index">
-                <button @click="button.action">{{ button.label }}</button>
-            </template>
-        </div>
-
-        <!-- 人物模型画布 -->
-        <canvas id="box1" ref="liveCanvas" @mousemove="onMouseMove" @mouseleave="onMouseLeave"></canvas>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import * as PIXI from "pixi.js";
-import { Live2DModel } from "pixi-live2d-display/cubism4";
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
-const textInput = ref('');  // 用于绑定输入框的值
-
-
-
-window.PIXI = PIXI;
-let app = null;
+// 定义响应式数据
+const text = ref('你好，欢迎光临'); // 用来存储文本输入
 let model = null;
-const liveCanvas = ref(null);
-const showButtons = ref(false);  // 控制按钮显示状态
-const mouseOverCanvas = ref(false);  // 鼠标是否在 canvas 上
-const mouseOverButtons = ref(false); // 鼠标是否在按钮区域
 
-const modelPath = '/live2d/model/Nahida/Nahida_1080.model3.json';
+// Live2D 模型路径
+const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
 
-// 固定模型的宽高
-const MODEL_WIDTH = 450;
-const MODEL_HEIGHT = 700;
+// 在组件挂载时执行
+onMounted(() => {
+    const live2d = PIXI.live2d;
 
-// 定义按钮数据
-const buttons = [
-    { label: "愤怒", action: () => expression('f00') },   // Angry
-    { label: "黑色", action: () => expression('f01') },   // black
-    { label: "半眼", action: () => expression('f02') },   // Halfeyes
-    { label: "换手", action: () => expression('f03') },   // HandChange
-    { label: "开心", action: () => expression('f04') },   // Happy1
-    { label: "草", action: () => expression('f05') },     // kusa
-    { label: "换嘴", action: () => expression('f06') },   // mouthchange
-    { label: "悲伤1", action: () => expression('f07') },   // Sad1
-    { label: "悲伤2", action: () => expression('f08') },   // Sad2
-    { label: "害羞", action: () => expression('f09') },    // shy_normal
-    { label: "眨眼", action: () => expression('f10') },    // Wink
-    { label: "星眼", action: () => expression('f11') },    // StarEye
-    { label: "眨眼2", action: () => expression('f12') }    // Wink (第二种眨眼)
-];
+    // 初始化 PIXI 应用
+    const app = new PIXI.Application({
+        view: document.getElementById('canvas'),
+        autoStart: true,
+        resizeTo: window,
+        backgroundColor: 0x333333,
+    });
 
-// 加载和渲染 Live2D 模型
-onMounted(async () => {
-    try {
-        app = new PIXI.Application({
-            view: liveCanvas.value,
-            width: MODEL_WIDTH,
-            height: MODEL_HEIGHT,
-            resolution: window.devicePixelRatio,
-            antialias: true,
-            backgroundAlpha: 0,
-            powerPreference: 'high-performance',
+    (async function main() {
+        const models = await Promise.all([live2d.Live2DModel.from(cubism4Model)]);
+
+        models.forEach((m) => {
+            app.stage.addChild(m);
+
+            const scaleX = innerWidth / m.width;
+            const scaleY = innerHeight / m.height;
+
+            // 自适应窗口尺寸
+            m.scale.set(Math.min(scaleX, scaleY));
+            m.y = innerHeight * 0.1;
+            draggable(m);
         });
 
-        app.ticker.stop(); // 禁用自动渲染
+        model = models[0];
 
-        model = await Live2DModel.from(modelPath);
-        app.stage.addChild(model);
-        model.width = MODEL_WIDTH;
-        model.height = MODEL_HEIGHT;
-        model.position.set((MODEL_WIDTH - model.width) / 2, (MODEL_HEIGHT - model.height) / 2);
+        // 居中显示模型
+        model.x = (innerWidth - model.width) / 2;
 
-        // 添加拖动功能
-        makeDraggable(model);
+        // 监听模型交互
+        model.on('hit', (hitAreas) => {
+            if (hitAreas.includes('Body')) {
+                model.motion('Tap');
+            }
+            if (hitAreas.includes('Head')) {
+                model.expression();
+            }
+        });
+    })();
 
-        console.log('模型加载成功');
-        renderModel(); // 开始渲染
-    } catch (error) {
-        console.error('模型加载失败:', error);
+    // 播放音频
+    function talk(model, audio) {
+        const audio_link = audio;
+        const volume = 1;
+        const expression = 3;
+        const resetExpression = true;
+        const crossOrigin = 'anonymous';
+
+        model.speak(audio_link, {
+            volume,
+            expression,
+            resetExpression,
+            crossOrigin,
+        });
+        model.speak(audio_link);
+        model.speak(audio_link, { volume });
+        model.speak(audio_link, { expression, resetExpression });
     }
+
+    // 拖动功能
+    function draggable(model) {
+        model.buttonMode = true;
+        model.on('pointerdown', (e) => {
+            model.dragging = true;
+            model._pointerX = e.data.global.x - model.x;
+            model._pointerY = e.data.global.y - model.y;
+        });
+        model.on('pointermove', (e) => {
+            if (model.dragging) {
+                model.position.x = e.data.global.x - model._pointerX;
+                model.position.y = e.data.global.y - model._pointerY;
+            }
+        });
+        model.on('pointerupoutside', () => (model.dragging = false));
+        model.on('pointerup', () => (model.dragging = false));
+    }
+
+    // 点击播放测试音频
+    document.getElementById('play').onclick = function () {
+        talk(model, '/src/assets/audio/demo.mp3');
+    };
+
+    // 点击开始生成音频
+    document.getElementById('start').onclick = function () {
+        const textValue = text.value.trim();
+        if (textValue === '') {
+            alert('请输入内容');
+            return false;
+        }
+        document.getElementById('start').disabled = true;
+        axios
+            .get(
+                `http://127.0.0.1:2020/dealAudio?file_name=test.mp3&voice=xiaoxiao&text=${textValue}`
+            )
+            .then((response) => {
+                const audioUrl = response.data + '?v=' + new Date().getTime();
+                talk(model, audioUrl);
+                document.getElementById('start').disabled = false;
+            })
+            .catch((error) => {
+                console.error('请求接口失败:', error);
+                document.getElementById('start').disabled = false;
+            });
+    };
 });
-
-onBeforeUnmount(() => {
-    if (model) {
-        model.destroy();
-        model = null;
-    }
-    if (app) {
-        app.destroy();
-        app = null;
-    }
-});
-
-// 手动渲染函数
-function renderModel() {
-    if (app && model) {
-        app.renderer.render(app.stage);
-        requestAnimationFrame(renderModel);
-    }
-}
-
-function makeDraggable(model) {
-    model.interactive = true;
-    model.buttonMode = true;
-
-    model.on('pointerdown', (event) => {
-        model.dragging = true;
-        model.data = event.data;
-        model.offset = model.data.getLocalPosition(model.parent);
-        model.offset.x -= model.x;
-        model.offset.y -= model.y;
-    });
-
-    model.on('pointermove', () => {
-        if (model.dragging) {
-            const newPosition = model.data.getLocalPosition(model.parent);
-            model.x = newPosition.x - model.offset.x;
-            model.y = newPosition.y - model.offset.y;
-        }
-    });
-
-    model.on('pointerup', () => {
-        model.dragging = false;
-        model.data = null;
-    });
-
-    model.on('pointerupoutside', () => {
-        model.dragging = false;
-        model.data = null;
-    });
-}
-
-// 鼠标移动事件处理
-function onMouseMove(event) {
-    const rect = liveCanvas.value.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    // 检查鼠标是否在模型区域内
-    mouseOverCanvas.value = (
-        mouseX >= model.position.x && mouseX <= model.position.x + MODEL_WIDTH &&
-        mouseY >= model.position.y && mouseY <= model.position.y + MODEL_HEIGHT
-    );
-
-    updateButtonVisibility();
-}
-
-// 鼠标离开画布区域时，更新鼠标状态并隐藏按钮
-function onMouseLeave() {
-    mouseOverCanvas.value = false;
-    updateButtonVisibility();
-}
-
-// 更新按钮显示状态
-function updateButtonVisibility() {
-    showButtons.value = mouseOverCanvas.value || mouseOverButtons.value;
-}
-
-// 触发模型表情
-function expression(type) {
-    if (model && model.expression) {
-        try {
-            model.expression(type);
-        } catch (error) {
-            console.error(`表情 ${type} 触发失败:`, error);
-        }
-    }
-}
-
-// 触发模型动作
-function motion(type) {
-    if (model && model.motion) {
-        try {
-            model.motion(type);
-            console.log(`${type} 动作触发成功`);
-        } catch (error) {
-            console.error(`动作 ${type} 触发失败:`, error);
-        }
-    }
-}
-function playAudio() {
-    console.log("触发音频动作");
-    model.internalModel.setParameterValue("ParamHeadYaw", 0.5);
-    model.internalModel.update();
-
-
-}
-
-
 </script>
 
-<style lang="scss" scoped>
-#box1 {
-    display: block;
-    margin: 0 auto;
-    width: 450px;
-    height: 700px;
-}
-
-.button1 {
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    gap: 5px;
+<style scoped>
+#control {
     position: absolute;
-    top: 0;
-    left: 10%;
+    top: 50px;
+    left: 50px;
+    color: #ffffff;
+    font-size: 18px;
 }
 
-.tool1 {
-    width: 400px;
-    height: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    border: 1px solid #ccc;
-}
-
-.tool1 button {
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: rgb(8, 177, 25);
-    font-size: 14px;
-    cursor: pointer;
-    outline: none;
-    transition: .5s;
-}
-
-.tool1 button:hover {
-    color: rgb(27, 212, 71);
-    background-color: rgb(255, 255, 255);
-    font-size: 6px;
-    cursor: pointer;
-    outline: none;
-}
-
-.input-container {
-    width: 100%;
-    height: 50px;
-    position: absolute;
-    top: 0;
-    /* 调整为你想要的位置 */
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-
-    button {
-        border-radius: 5px;
-        height: 100%;
-        font-size: 10px;
-    }
-}
-
-.input-box {
-    width: 100%;
-    height: 100%;
-    padding: 5px;
-    font-size: 14px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+.label {
+    font-size: 32px;
+    font-weight: 800;
 }
 </style>
