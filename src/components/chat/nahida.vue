@@ -1,44 +1,113 @@
 <template>
-    <div class="container">
+    <div class="container" @mouseenter="showInputBox = true" @mouseleave="handleMouseLeave">
         <!-- 输入框放置在模型头部 -->
-        <div class="input-container">
-            <input v-model="text" placeholder="请输入文本" class="input-box" @keyup.enter="sendMessage"></input>
-        </div>
+        <transition name="fade">
+            <div class="input-container" v-show="showInputBox">
+                <input v-model="userMessage" placeholder="请输入文本" class="input-box" @keyup.enter="sendMessage"
+                    @focus="showInputBox = true" @blur="handleBlur">
+                </input>
+                <div class="control">
+                    <button class="closeChatList" @click="closeChatList">清除记忆</button>
+                    {{ fullResponse }}
+                </div>
+            </div>
+        </transition>
         <canvas id="canvas"></canvas>
-        <div id="control">
-            <div class="label">1、测试说话</div>
-            <button id="play">测试音频</button>
-        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useChatStore } from '@/store/chatStore';
+import { Ollama } from 'ollama'
+import Swal from 'sweetalert2';
+const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
+const chatStore = useChatStore();
+const userMessage = ref('');
+let fullResponse = ref('');
+const showInputBox = ref(false); // 控制输入框的显示与隐藏
 
+// 持续聊天功能：发送消息并保持聊天记录
+const sendMessage = async () => {
+
+    fullResponse.value = ""; // 清空
+    talk(model, '/src/assets/audio/mog.wav');
+
+    // 先将用户输入的消息添加到消息列表
+    chatStore.addMessage({ name: 'user', text: userMessage.value });
+
+    // 清空输入框
+    userMessage.value = '';
+
+    try {
+        // 将当前消息和之前的对话一并发送给 Ollama
+        const message = { role: 'user', content: userMessage.value };
+        const response = await ollama.chat({
+            model: 'Nahida:latest',  // 使用的模型
+            messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
+            stream: true,  // 启用流式响应
+        });
+
+        // 处理流式响应并更新消息
+        for await (const part of response) {
+            fullResponse.value += parseMarkdown(part.message.content); // 拼接消息内容
+        }
+        console.log(fullResponse);
+
+        chatStore.addMessage({ name: 'Nahida', text: fullResponse }); // 更新消息列表
+
+    } catch (error) {
+        console.error('Ollama API 错误:', error);
+        Swal.fire('错误', '发送消息失败', 'error');
+    }
+};
+//markdown解析过滤
+function parseMarkdown(mdText) {
+    // 去除标题符号（#）
+    mdText = mdText.replace(/^#{1,6}\s+/g, ''); // 去除标题
+    // 去除加粗符号（** 或 __）
+    mdText = mdText.replace(/\*\*|\_\_/g, '');
+    // 去除斜体符号（* 或 _）
+    mdText = mdText.replace(/\*|\_/g, '');
+    // 去除无序列表符号（* 或 -）
+    mdText = mdText.replace(/^\s*[\*\-]\s+/gm, '');
+    // 去除有序列表符号（数字.）
+    mdText = mdText.replace(/^\s*\d+\.\s+/gm, '');
+    // 去除链接和图片语法
+    mdText = mdText.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1'); // 链接
+    mdText = mdText.replace(/!\[([^\]]+)\]\([^\)]+\)/g, '$1'); // 图片
+    // 去除代码块和代码行
+    mdText = mdText.replace(/```[\s\S]*?```/g, ''); // 多行代码块
+    mdText = mdText.replace(/`[^`]+`/g, ''); // 单行代码
+
+    // 在每个句点 (。) 后面加上换行符
+    mdText = mdText.replace(/。/g, '。\n');
+
+    return mdText;
+}
+
+
+
+// 清除记忆
+const closeChatList = async () => {
+
+
+    chatStore.closeMessage();
+    fullResponse.value = ""
+    Swal.fire({
+        icon: 'success',
+        title: '清除成功！',
+        text: '您的聊天记录已清除！',
+    });
+}
 
 const text = ref('你好，欢迎光临'); // 用来存储文本输入
 let model = null;
-
+// 确定模型
 const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
-const props = defineProps({
-    audioUrl: {
-        type: String,
-        default: ''
-    }
-});
-const audioRef = ref(null);
-// 当 audioUrl 改变时，播放音频
-watch(() => props.audioUrl, (newAudioUrl) => {
-    if (newAudioUrl && audioRef.value) {
-        console.log("改变了，触发成功", newAudioUrl);
-
-        talk(model, newAudioUrl);  // 使用生成的 Blob URL
-    }
-});
 
 onMounted(() => {
     const live2d = PIXI.live2d;
-
     // 设置 PIXI.Application
     const app = new PIXI.Application({
         view: document.getElementById('canvas'),
@@ -75,17 +144,6 @@ onMounted(() => {
             }
         });
     })();
-
-    // 播放音频的函数
-    function talk(model, audio) {
-        model.speak(audio, {
-            volume: 1,
-            expression: 3,
-            resetExpression: true,
-            crossOrigin: 'anonymous',
-        });
-    }
-
     // 使模型可以拖动
     function draggable(model) {
         model.buttonMode = true;
@@ -103,29 +161,35 @@ onMounted(() => {
         model.on('pointerupoutside', () => (model.dragging = false));
         model.on('pointerup', () => (model.dragging = false));
     }
-
-    document.getElementById('play').onclick = function () {
-        talk(model, '/src/assets/audio/mog.wav');
-    };
-
-
 });
+
 // 播放音频的函数
 function talk(model, audio) {
+    let i = Math.floor(Math.random() * 11);
     model.speak(audio, {
         volume: 1,
-        expression: 3,
+        expression: i,
         resetExpression: true,
         crossOrigin: 'anonymous',
     });
 }
 
-const sendMessage = async () => {
-    talk(model, '/src/assets/audio/mog.wav');
-};
+// 鼠标离开时的处理逻辑
+const handleMouseLeave = () => {
+    // 当鼠标离开并且输入框没有聚焦时，才隐藏输入框
+    if (document.activeElement !== document.querySelector('.input-box')) {
+        showInputBox.value = false;
+    }
+}
+
+// 输入框失焦时的处理逻辑
+const handleBlur = () => {
+    // 输入框失去焦点时，可以隐藏输入框
+    showInputBox.value = false;
+}
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .container {
     width: 100%;
     height: 100%;
@@ -133,45 +197,35 @@ const sendMessage = async () => {
     overflow: hidden;
     margin: 0 auto;
     background-color: transparent;
+    transition: opacity 0.3s ease-in-out;
 }
 
 #canvas {
-    width: 100%;
+    width: 200%;
+    transform: translateX(-30%);
     height: 100%;
     display: block;
-}
-
-#control {
     position: absolute;
-    bottom: 50px;
-    left: 50px;
-    color: #ffffff;
-    font-size: 18px;
-    z-index: 10;
-    background-color: transparent;
-}
-
-.label {
-    font-size: 20px;
-    font-weight: 800;
 }
 
 .input-container {
     width: 100%;
-    height: 100px;
+    height: 50px;
     position: absolute;
-    top: 10px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
     display: flex;
     justify-content: center;
+    transition: opacity 0.3s ease-in-out;
+    /* 过渡效果 */
 }
 
 .input-box {
-    width: 80%;
-    height: 80px;
-    font-size: 16px;
+    width: 100%;
+    height: 100%;
+    font-size: 12px;
     padding: 10px;
     border-radius: 10px;
     border: 2px solid #fff;
@@ -181,25 +235,61 @@ const sendMessage = async () => {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-textarea:focus {
-    outline: none;
+input::placeholder {
+    color: #267223;
+    /* 设置占位符文字颜色 */
+    font-size: 16px;
+    /* 设置占位符文字大小 */
+    font-style: italic;
+    /* 设置占位符文字为斜体 */
+    font-weight: bold;
+    /* 设置占位符文字为加粗 */
 }
 
-button {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 10px;
+/* 回应框 */
+.control {
+    padding: .5em;
+    position: absolute;
+    right: 0;
+    top: 100px;
+    width: 190px;
+    min-height: 260px;
+    background-color: #8be297c2;
+    overflow-y: auto;
     border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 12px;
+    color: #2f8808;
+
 }
 
-button:disabled {
-    background-color: #ccc;
+.closeChatList {
+    border: #157c23;
+    background-color: #3bb34b;
+    padding: 5px;
+    border-radius: 5px;
+    color: white;
+    transition: .5s;
 }
 
-button:hover {
-    background-color: #2980b9;
+.closeChatList:hover {
+    color: #ffffff;
+    background-color: #157c23;
+}
+
+/* 过渡效果 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.fade-enter,
+.fade-leave-to
+
+/* .fade-leave-active in <2.1.8 */
+    {
+    opacity: 0;
 }
 </style>
