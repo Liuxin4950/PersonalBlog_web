@@ -1,39 +1,52 @@
 <template>
-    <div>
+    <div class="container">
+        <!-- 输入框放置在模型头部 -->
+        <div class="input-container">
+            <input v-model="text" placeholder="请输入文本" class="input-box" @keyup.enter="sendMessage"></input>
+        </div>
         <canvas id="canvas"></canvas>
         <div id="control">
             <div class="label">1、测试说话</div>
             <button id="play">测试音频</button>
-            <br /><br />
-            <div class="label">2、调用接口生成音频</div>
-            <textarea v-model="text" style="width:400px;height:300px;">你好，欢迎光临</textarea>
-            <br /><br />
-            <button id="start">开始说话</button>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, watch } from 'vue';
 
-// 定义响应式数据
+
 const text = ref('你好，欢迎光临'); // 用来存储文本输入
 let model = null;
 
-// Live2D 模型路径
 const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
+const props = defineProps({
+    audioUrl: {
+        type: String,
+        default: ''
+    }
+});
+const audioRef = ref(null);
+// 当 audioUrl 改变时，播放音频
+watch(() => props.audioUrl, (newAudioUrl) => {
+    if (newAudioUrl && audioRef.value) {
+        console.log("改变了，触发成功", newAudioUrl);
 
-// 在组件挂载时执行
+        talk(model, newAudioUrl);  // 使用生成的 Blob URL
+    }
+});
+
 onMounted(() => {
     const live2d = PIXI.live2d;
 
-    // 初始化 PIXI 应用
+    // 设置 PIXI.Application
     const app = new PIXI.Application({
         view: document.getElementById('canvas'),
         autoStart: true,
-        resizeTo: window,
-        backgroundColor: 0x333333,
+        resizeTo: window,  // 自动适应窗口尺寸
+        backgroundAlpha: 0, // 保持透明背景
+        resolution: window.devicePixelRatio || 1, // 提高清晰度
+        clearBeforeRender: true,
     });
 
     (async function main() {
@@ -41,22 +54,18 @@ onMounted(() => {
 
         models.forEach((m) => {
             app.stage.addChild(m);
+            const scaleX = app.screen.width / m.width;
+            const scaleY = app.screen.height / m.height;
 
-            const scaleX = innerWidth / m.width;
-            const scaleY = innerHeight / m.height;
-
-            // 自适应窗口尺寸
+            // 适配屏幕尺寸
             m.scale.set(Math.min(scaleX, scaleY));
-            m.y = innerHeight * 0.1;
+            m.y = 50; // 留出空间给输入框
             draggable(m);
         });
 
         model = models[0];
+        model.x = (app.screen.width - model.width) / 2; // 居中显示模型
 
-        // 居中显示模型
-        model.x = (innerWidth - model.width) / 2;
-
-        // 监听模型交互
         model.on('hit', (hitAreas) => {
             if (hitAreas.includes('Body')) {
                 model.motion('Tap');
@@ -67,26 +76,17 @@ onMounted(() => {
         });
     })();
 
-    // 播放音频
+    // 播放音频的函数
     function talk(model, audio) {
-        const audio_link = audio;
-        const volume = 1;
-        const expression = 3;
-        const resetExpression = true;
-        const crossOrigin = 'anonymous';
-
-        model.speak(audio_link, {
-            volume,
-            expression,
-            resetExpression,
-            crossOrigin,
+        model.speak(audio, {
+            volume: 1,
+            expression: 3,
+            resetExpression: true,
+            crossOrigin: 'anonymous',
         });
-        model.speak(audio_link);
-        model.speak(audio_link, { volume });
-        model.speak(audio_link, { expression, resetExpression });
     }
 
-    // 拖动功能
+    // 使模型可以拖动
     function draggable(model) {
         model.buttonMode = true;
         model.on('pointerdown', (e) => {
@@ -104,47 +104,102 @@ onMounted(() => {
         model.on('pointerup', () => (model.dragging = false));
     }
 
-    // 点击播放测试音频
     document.getElementById('play').onclick = function () {
-        talk(model, '/src/assets/audio/demo.mp3');
+        talk(model, '/src/assets/audio/mog.wav');
     };
 
-    // 点击开始生成音频
-    document.getElementById('start').onclick = function () {
-        const textValue = text.value.trim();
-        if (textValue === '') {
-            alert('请输入内容');
-            return false;
-        }
-        document.getElementById('start').disabled = true;
-        axios
-            .get(
-                `http://127.0.0.1:2020/dealAudio?file_name=test.mp3&voice=xiaoxiao&text=${textValue}`
-            )
-            .then((response) => {
-                const audioUrl = response.data + '?v=' + new Date().getTime();
-                talk(model, audioUrl);
-                document.getElementById('start').disabled = false;
-            })
-            .catch((error) => {
-                console.error('请求接口失败:', error);
-                document.getElementById('start').disabled = false;
-            });
-    };
+
 });
+// 播放音频的函数
+function talk(model, audio) {
+    model.speak(audio, {
+        volume: 1,
+        expression: 3,
+        resetExpression: true,
+        crossOrigin: 'anonymous',
+    });
+}
+
+const sendMessage = async () => {
+    talk(model, '/src/assets/audio/mog.wav');
+};
 </script>
 
 <style scoped>
+.container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+    background-color: transparent;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
 #control {
     position: absolute;
-    top: 50px;
+    bottom: 50px;
     left: 50px;
     color: #ffffff;
     font-size: 18px;
+    z-index: 10;
+    background-color: transparent;
 }
 
 .label {
-    font-size: 32px;
+    font-size: 20px;
     font-weight: 800;
+}
+
+.input-container {
+    width: 100%;
+    height: 100px;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+}
+
+.input-box {
+    width: 80%;
+    height: 80px;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    background-color: rgba(108, 224, 118, 0.5);
+    color: #157c23;
+    resize: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+textarea:focus {
+    outline: none;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:disabled {
+    background-color: #ccc;
+}
+
+button:hover {
+    background-color: #2980b9;
 }
 </style>

@@ -5,113 +5,111 @@
 
         <!-- 配置部分：完整的全局配置 -->
         <div class="config" :class="{ 'collapsed': isCollapsed }">
-          <el-card>
-            <el-button type="primary" @click="toggleCollapse">{{ isCollapsed ? '展开' : '收缩' }}</el-button>
+          <div class="card">
+            <button @click="toggleCollapse">{{ isCollapsed ? '展开' : '收缩' }}</button>
+          </div>
 
-          </el-card>
-          <el-card>
-            <div v-show="!isCollapsed" class="config-box">
-              <h3>配置全局参数</h3>
+          <div v-show="!isCollapsed" class="card config-box">
+            <h3>配置全局参数</h3>
+            <form @submit.prevent="updateConfig">
+              <!-- BASE_URL -->
+              <div class="form-item">
+                <label for="baseUrl">BASE_URL</label>
+                <input id="baseUrl" type="text" v-model="config.BASE_URL" placeholder="请输入服务 IP 地址" />
+              </div>
 
-              <el-form label-position="top" label-width="100px">
-                <!-- BASE_URL -->
-                <el-form-item label="BASE_URL">
-                  <el-input v-model="config.BASE_URL" placeholder="请输入 服务ip地址" />
-                </el-form-item>
+              <!-- TTS_PORT -->
+              <div class="form-item">
+                <label for="ttsPort">TTS_PORT</label>
+                <input id="ttsPort" type="text" v-model="config.TTS_PORT" placeholder="请输入 TTS 服务端口" />
+              </div>
 
-                <!-- TTS_PORT -->
-                <el-form-item label="TTS_PORT">
-                  <el-input v-model="config.TTS_PORT" placeholder="请输入 TTS服务端口" />
-                </el-form-item>
+              <!-- CHAT_PORT -->
+              <div class="form-item">
+                <label for="chatPort">CHAT_PORT</label>
+                <input id="chatPort" type="text" v-model="config.CHAT_PORT" placeholder="请输入本地模型端口" />
+              </div>
 
-                <!-- CHAT_PORT -->
-                <el-form-item label="CHAT_PORT">
-                  <el-input v-model="config.CHAT_PORT" placeholder="请输入 本地模型端口" />
-                </el-form-item>
+              <!-- 角色与情感选择部分 -->
+              <h3>选择角色和情感</h3>
 
-                <!-- 角色与情感选择部分 -->
-                <h3>选择角色和情感</h3>
-                <!-- <div>
-                  <label for="characterSelect">角色</label>
-                  <select id="characterSelect" v-model="config.DEFAULT_TTS_PARAMS.cha_name"
-                    @change="updateEmotionsForSelectedCharacter">
-                    <option v-for="(emotions, character) in characterList" :key="character" :value="character">
-                      {{ character }}
-                    </option>
-                  </select>
-                </div> -->
+              <div class="form-item">
+                <label for="characterSelect">角色</label>
+                <select id="characterSelect" v-model="config.DEFAULT_TTS_PARAMS.cha_name"
+                  @change="updateEmotionsForSelectedCharacter">
+                  <option v-for="(emotions, character) in characterList" :key="character" :value="character">
+                    {{ character }}
+                  </option>
+                </select>
+              </div>
 
-                <el-form-item label="角色">
-                  <el-select v-model="config.DEFAULT_TTS_PARAMS.cha_name"
-                    @change="updateEmotionsForSelectedCharacter, $forceUpdate()" placeholder="请选择角色">
-                    <el-option v-for="(emotions, character) in characterList" :key="character" :label="character"
-                      :value="character">
-                    </el-option>
-                  </el-select>
-                </el-form-item>
+              <div class="form-item">
+                <label for="emotionSelect">情感</label>
+                <select id="emotionSelect" v-model="config.DEFAULT_TTS_PARAMS.character_emotion">
+                  <option v-for="emotion in emotionsForSelectedCharacter" :key="emotion" :value="emotion">
+                    {{ emotion }}
+                  </option>
+                </select>
+              </div>
 
-                <el-form-item label="情感">
-                  <el-select v-model="config.DEFAULT_TTS_PARAMS.character_emotion" placeholder="请选择情感">
-                    <el-option v-for="emotion in emotionsForSelectedCharacter" :key="emotion" :label="emotion"
-                      :value="emotion">
-                    </el-option>
-                  </el-select>
-                </el-form-item>
+              <!-- 其他 TTS 参数 -->
+              <h3>其他 TTS 参数</h3>
 
-                <!-- 其他 TTS 参数 -->
-                <h3>其他 TTS 参数</h3>
+              <div class="form-item">
+                <label for="language">语言</label>
+                <input id="language" type="text" v-model="config.DEFAULT_TTS_PARAMS.language" placeholder="请输入语言" />
+              </div>
 
-                <el-form-item label="语言">
-                  <el-input v-model="config.DEFAULT_TTS_PARAMS.language" placeholder="请输入语言" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="speed">速度</label>
+                <input id="speed" type="number" v-model="config.DEFAULT_TTS_PARAMS.speed" step="0.1" />
+              </div>
 
-                <el-form-item label="速度">
-                  <el-input-number v-model="config.DEFAULT_TTS_PARAMS.speed" :step="0.1" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="batchSize">批处理大小</label>
+                <input id="batchSize" type="number" v-model="config.DEFAULT_TTS_PARAMS.batch_size" />
+              </div>
 
-                <el-form-item label="批处理大小">
-                  <el-input-number v-model="config.DEFAULT_TTS_PARAMS.batch_size" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="topK">Top-K</label>
+                <input id="topK" type="number" v-model="config.DEFAULT_TTS_PARAMS.top_k" />
+              </div>
 
-                <el-form-item label="Top-K">
-                  <el-input-number v-model="config.DEFAULT_TTS_PARAMS.top_k" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="topP">Top-P</label>
+                <input id="topP" type="number" v-model="config.DEFAULT_TTS_PARAMS.top_p" step="0.1" />
+              </div>
 
-                <el-form-item label="Top-P">
-                  <el-input-number v-model="config.DEFAULT_TTS_PARAMS.top_p" :step="0.1" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="temperature">Temperature</label>
+                <input id="temperature" type="number" v-model="config.DEFAULT_TTS_PARAMS.temperature" step="0.1" />
+              </div>
 
-                <el-form-item label="Temperature">
-                  <el-input-number v-model="config.DEFAULT_TTS_PARAMS.temperature" :step="0.1" />
-                </el-form-item>
+              <div class="form-item">
+                <label for="stream">流模式</label>
+                <select id="stream" v-model="config.DEFAULT_TTS_PARAMS.stream">
+                  <option :value="true">True</option>
+                  <option :value="false">False</option>
+                </select>
+              </div>
 
-                <!-- 优化为布尔值下拉框 -->
-                <el-form-item label="流模式">
-                  <el-select v-model="config.DEFAULT_TTS_PARAMS.stream" placeholder="请选择流模式">
-                    <el-option :label="'True'" :value="true"></el-option>
-                    <el-option :label="'False'" :value="false"></el-option>
-                  </el-select>
-                </el-form-item>
-
-                <el-form-item label="保存临时文件">
-                  <el-select v-model="config.DEFAULT_TTS_PARAMS.save_temp" placeholder="请选择是否保存临时文件">
-                    <el-option :label="'True'" :value="true"></el-option>
-                    <el-option :label="'False'" :value="false"></el-option>
-                  </el-select>
-                </el-form-item>
-              </el-form>
+              <div class="form-item">
+                <label for="saveTemp">保存临时文件</label>
+                <select id="saveTemp" v-model="config.DEFAULT_TTS_PARAMS.save_temp">
+                  <option :value="true">True</option>
+                  <option :value="false">False</option>
+                </select>
+              </div>
 
               <!-- 操作按钮 -->
-              <el-row justify="center" class="button-group">
-                <el-space>
-                  <el-button round type="primary" icon="el-icon-check" @click="updateConfig">保存配置</el-button>
-                  <el-button round type="danger" icon="el-icon-delete" @click="closeChatList">清除记录</el-button>
-                </el-space>
-              </el-row>
-            </div>
-
-          </el-card>
+              <div class="button-group">
+                <button type="submit">保存配置</button>
+                <button type="button" @click="closeChatList">清除记录</button>
+              </div>
+            </form>
+          </div>
         </div>
+
 
 
         <!-- 聊天信息展示部分 -->
@@ -136,7 +134,7 @@
       <!-- 输入框部分：用户发送消息 -->
       <div class="text-input">
         <div class="">
-          <huohou class="huohuo" />
+          <nahida class="user-model" />
         </div>
         <div class="input-box">
           <input type="text" v-model="userMessage" :disabled="isInputDisabled" placeholder="给AI发送消息"
@@ -151,7 +149,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import Swal from 'sweetalert2'
-import huohou from '../components/chat/huohuo.vue';
+import nahida from '@/components/chat/nahida.vue';
 import { useChatStore } from '../store/chatStore';
 // 统一管理仓库
 const chatStore = useChatStore();
@@ -272,6 +270,7 @@ const sendMessage = async () => {
     console.log(response);
 
     let rawText = response.data.response_text;
+
     let formattedText = formatResponseText(rawText);
     console.log(formattedText)
 
@@ -283,6 +282,7 @@ const sendMessage = async () => {
       text: formattedText,
       audio: audioSrc,
     });
+    console.log("添加返回信息+");
 
     // 尝试播放音频，播放失败时也不会影响数据保存
     const audio = new Audio(audioSrc);
@@ -353,12 +353,8 @@ onMounted(() => {
 
 
 <style scoped>
-.select_popper {
-  z-index: 99999 !important;
-}
-
 .box {
-  margin-top: 70px;
+  margin-top: 0;
   width: 100%;
   height: calc(100vh - 70px);
   background-color: #fafafa;
@@ -488,7 +484,6 @@ onMounted(() => {
 .text-input {
   width: 100%;
   height: 100px;
-  background-color: white;
   border-radius: 25px;
   position: fixed;
   bottom: 0;
@@ -496,20 +491,21 @@ onMounted(() => {
   z-index: 20;
 }
 
-.huohuo {
-  width: 300px;
+.user-model {
+  width: 900px;
+  height: 600px;
   z-index: -1;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 0;
+  bottom: -150px;
   /* top: -30rem;
   left: calc(50% - 10rem); */
 
 }
 
 .input-box {
-  width: 80%;
+  width: 65%;
   margin: 0 auto;
   border-radius: 25px;
   overflow: hidden;

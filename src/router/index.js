@@ -8,6 +8,7 @@ import About from '../views/About.vue';
 import Detailed from '../views/Detailed/Detailed.vue';
 import huohuo from '../components/chat/huohuo.vue';
 import nahida from '@/components/chat/nahida.vue';
+import ollama from '@/components/chat/ollama.vue';
 import newDetailed from '@/views/Detailed/newDetailed.vue';
 import Info from '@/views/login/Info.vue';
 const routes = [
@@ -50,6 +51,12 @@ const routes = [
     name: 'Nahida',
     component: nahida,
     meta: { breadcrumb: 'Nahida' },
+  },
+  {
+    path: '/chat/ollama',
+    name: 'ollama',
+    component: ollama,
+    meta: { breadcrumb: 'Ollama' },
   },
   {
     path: '/about',
