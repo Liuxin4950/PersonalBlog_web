@@ -13,8 +13,7 @@
           <div v-for="(message, index) in chatStore.messages" :key="index" class="message"
             :class="{ 'chatlist-user': message.name === 'user', 'chatlist-ai': message.name !== 'user' }">
             <h4 v-if="message.name !== 'user'">{{ message.name }}</h4>
-            <div v-html="message.text"></div>
-            <audio v-if="message.audio" :src="message.audio" controls></audio>
+            <div id="markdown" v-html="message.text"></div>
           </div>
         </div>
       </div>
@@ -37,6 +36,10 @@ import { ref } from 'vue';
 import { useChatStore } from '../store/chatStore';
 import ollama from 'ollama/browser'; // 确保在浏览器环境下使用
 import Swal from 'sweetalert2';
+import { marked } from 'marked';
+
+
+
 
 const chatStore = useChatStore();
 const userMessage = ref('');
@@ -49,22 +52,22 @@ const sendMessage = async () => {
 
   // 清空输入框
   userMessage.value = '';
+  let fullResponse = ref('');
 
   try {
     // 将当前消息和之前的对话一并发送给 Ollama
     const message = { role: 'user', content: userMessage.value };
     const response = await ollama.chat({
-      model: 'Nahida:latest',  // 使用的模型
+      model: 'naxida:latest',  // 使用的模型
       messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
       stream: true,  // 启用流式响应
     });
 
     // 处理流式响应并更新消息
-    let fullResponse = '';
     for await (const part of response) {
-      fullResponse += part.message.content; // 拼接消息内容
+      fullResponse.value += part.message.content; // 拼接消息内容
     }
-    chatStore.addMessage({ name: 'Nahida', text: fullResponse }); // 更新消息列表
+    chatStore.addMessage({ name: 'Nahida', text: marked(fullResponse.value) }); // 更新消息列表
 
   } catch (error) {
     console.error('Ollama API 错误:', error);

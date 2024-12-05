@@ -8,6 +8,8 @@
                 </input>
                 <div class="control">
                     <button class="closeChatList" @click="closeChatList">清除记忆</button>
+                    <button class="closeChatList" @click="playAudio">播放音频</button>
+
                     {{ fullResponse }}
                 </div>
             </div>
@@ -21,6 +23,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useChatStore } from '@/store/chatStore';
 import { Ollama } from 'ollama'
 import Swal from 'sweetalert2';
+import { GenerateAudioUrl } from '@/services/tts';
 const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
 const chatStore = useChatStore();
 const userMessage = ref('');
@@ -31,7 +34,6 @@ const showInputBox = ref(false); // 控制输入框的显示与隐藏
 const sendMessage = async () => {
 
     fullResponse.value = ""; // 清空
-    talk(model, '/src/assets/audio/mog.wav');
 
     // 先将用户输入的消息添加到消息列表
     chatStore.addMessage({ name: 'user', text: userMessage.value });
@@ -43,7 +45,7 @@ const sendMessage = async () => {
         // 将当前消息和之前的对话一并发送给 Ollama
         const message = { role: 'user', content: userMessage.value };
         const response = await ollama.chat({
-            model: 'Nahida:latest',  // 使用的模型
+            model: 'naxida:latest',  // 使用的模型
             messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
             stream: true,  // 启用流式响应
         });
@@ -52,7 +54,8 @@ const sendMessage = async () => {
         for await (const part of response) {
             fullResponse.value += parseMarkdown(part.message.content); // 拼接消息内容
         }
-        console.log(fullResponse);
+        console.log(fullResponse.value);
+        playAudio(fullResponse.value)
 
         chatStore.addMessage({ name: 'Nahida', text: fullResponse }); // 更新消息列表
 
@@ -86,6 +89,31 @@ function parseMarkdown(mdText) {
     return mdText;
 }
 
+const playAudio = async (text) => {
+    let url = await GenerateAudioUrl({
+        "character": "流萤",
+        "text": text
+    });
+    console.log("生成的音频路径:" + url);
+
+    let audioPath = `http://localhost:8080` + url + `?timestamp=${new Date().getTime()}`;
+    console.log("我发送请求的链接" + audioPath);
+
+    // 使用前端的音频播放功能
+    talk(model, audioPath);  // 修改为新的函数名
+}
+
+
+// 播放音频的函数
+function talk(model, audio) {
+    let i = Math.floor(Math.random() * 11);
+    model.speak(audio, {
+        volume: 1,
+        expression: i,
+        resetExpression: true,
+        crossOrigin: 'anonymous',
+    });
+}
 
 
 // 清除记忆
@@ -164,7 +192,8 @@ onMounted(() => {
 });
 
 // 播放音频的函数
-function talk(model, audio) {
+// 播放音频的函数
+function playAudioFunction(model, audio) {
     let i = Math.floor(Math.random() * 11);
     model.speak(audio, {
         volume: 1,

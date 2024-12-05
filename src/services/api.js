@@ -5,7 +5,7 @@ import router from '@/router';  // 引入 Vue Router
 // 创建 axios 实例
 const instance = axios.create({
     baseURL: 'http://localhost:8080/api',  // 后端接口的根地址
-    timeout: 5000,  // 请求超时的时间，单位是毫秒
+    timeout: 30000,  // 请求超时的时间，单位是毫秒
 });
 
 // 请求拦截器
