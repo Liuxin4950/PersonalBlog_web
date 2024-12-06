@@ -11,19 +11,19 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
     (config) => {
-        console.log("------------------已进入请求拦截器------------------");
+        // console.log("------------------已进入请求拦截器------------------");
 
         const userStore = useUserStore();
         const token = userStore.token;//从仓库获取token的值
         if (token) {
-            console.log("我有token,添加token成功！");
+            // console.log("我有token,添加token成功！");
             config.headers['token'] = `${token}`;  // 如果有 token，添加到请求头
         } else {
             console.log("没有 token，跳转到登录页面");
             router.push({ name: 'login' });
             return Promise.reject('没有 token，跳转到登录页面');  // 终止请求
         }
-        console.log("------------------已退出请求拦截器------------------");
+        // console.log("------------------已退出请求拦截器------------------");
         console.log("");
 
         return config;

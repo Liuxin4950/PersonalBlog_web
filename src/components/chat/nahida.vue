@@ -29,41 +29,118 @@ const chatStore = useChatStore();
 const userMessage = ref('');
 let fullResponse = ref('');
 const showInputBox = ref(false); // 控制输入框的显示与隐藏
+const live2dModel = ''
+const ollamaModel = 'qwen2.5:3b'
+const ttsModel = 'Naxida'
 
-// 持续聊天功能：发送消息并保持聊天记录
-const sendMessage = async () => {
+let audioQueue = ref([]); // 使用 ref 包装数组
 
-    fullResponse.value = ""; // 清空
-
-    // 先将用户输入的消息添加到消息列表
-    chatStore.addMessage({ name: 'user', text: userMessage.value });
-
-    // 清空输入框
-    userMessage.value = '';
-
+// 播放音频方法
+const playAudio = async (text) => {
     try {
-        // 将当前消息和之前的对话一并发送给 Ollama
-        const message = { role: 'user', content: userMessage.value };
-        const response = await ollama.chat({
-            model: 'naxida:latest',  // 使用的模型
-            messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
-            stream: true,  // 启用流式响应
+        const url = await GenerateAudioUrl({
+            character: ttsModel,
+            text: text
         });
-
-        // 处理流式响应并更新消息
-        for await (const part of response) {
-            fullResponse.value += parseMarkdown(part.message.content); // 拼接消息内容
-        }
-        console.log(fullResponse.value);
-        playAudio(fullResponse.value)
-
-        chatStore.addMessage({ name: 'Nahida', text: fullResponse }); // 更新消息列表
-
+        // 将音频路径加入队列
+        audioQueue.value.push(url);
     } catch (error) {
-        console.error('Ollama API 错误:', error);
-        Swal.fire('错误', '发送消息失败', 'error');
+        console.error("生成音频路径失败：", error);
     }
 };
+
+// 使用 deep 选项监听 audioQueue 的变化
+// 修改的 `talk` 方法
+function talk(model, audioPath) {
+    return new Promise((resolve, reject) => {
+        try {
+            // 调用 speak 播放音频
+            model.speak(audioPath, {
+                volume: 1,
+                expression: 3,
+                resetExpression: true,
+                crossOrigin: "anonymous",
+                onend: () => { // 确保播放完成时触发 resolve
+                    console.log("播放完成", audioPath);
+                    resolve();
+                },
+                onerror: (error) => { // 播放失败时触发 reject
+                    console.error("音频播放失败：", error);
+                    reject(error);
+                }
+            });
+        } catch (error) {
+            reject(error); // 捕获任何其他错误
+        }
+    });
+}
+
+// 更新 `watch` 方法中的逻辑
+watch(
+    audioQueue,
+    async (newQueue) => {
+        if (newQueue.length > 0) {
+            const audioPath = `http://localhost:8080${newQueue[0]}`; // 获取队列中的第一个音频路径
+
+            try {
+                console.log("正在播放", audioPath);
+                await talk(model, audioPath); // 确保音频播放完成后继续
+                audioQueue.value.shift(); // 从队列中移除已播放的音频
+            } catch (error) {
+                console.error("音频播放失败：", error);
+            }
+        }
+    },
+    { deep: true }
+);
+
+// 发送消息方法
+const sendMessage = async () => {
+    fullResponse.value = ""; // 清空消息
+
+    chatStore.addMessage({ name: "user", text: userMessage.value });
+
+    const messageContent = userMessage.value;
+    userMessage.value = "";
+
+    try {
+        const response = await ollama.chat({
+            model: ollamaModel, // 使用的模型
+            messages: chatStore.messages.map((msg) => ({
+                role: msg.name === "user" ? "user" : "assistant",
+                content: msg.text
+            })),
+            stream: true // 启用流式响应
+        });
+
+        let currentText = "";
+
+        for await (const part of response) {
+            currentText += parseMarkdown(part.message.content);
+            fullResponse.value += part.message.content; // 拼接消息内容
+
+            if (currentText.length > 200) {
+                console.log("生成的部分文本长度：", currentText.length);
+
+                await playAudio(currentText); // 将当前文本生成音频并加入队列
+                currentText = ""; // 重置当前文本
+            }
+        }
+
+        if (currentText.length > 0) {
+            console.log("最后生成的文本长度：", currentText.length);
+
+            await playAudio(currentText); // 播放剩余的文本
+        }
+
+        chatStore.addMessage({ name: ttsModel, text: fullResponse.value }); // 更新消息列表
+    } catch (error) {
+        console.error("Ollama API 错误:", error);
+        Swal.fire("错误", "发送消息失败", "error");
+    }
+};
+
+
 //markdown解析过滤
 function parseMarkdown(mdText) {
     // 去除标题符号（#）
@@ -88,33 +165,6 @@ function parseMarkdown(mdText) {
 
     return mdText;
 }
-
-const playAudio = async (text) => {
-    let url = await GenerateAudioUrl({
-        "character": "流萤",
-        "text": text
-    });
-    console.log("生成的音频路径:" + url);
-
-    let audioPath = `http://localhost:8080` + url + `?timestamp=${new Date().getTime()}`;
-    console.log("我发送请求的链接" + audioPath);
-
-    // 使用前端的音频播放功能
-    talk(model, audioPath);  // 修改为新的函数名
-}
-
-
-// 播放音频的函数
-function talk(model, audio) {
-    let i = Math.floor(Math.random() * 11);
-    model.speak(audio, {
-        volume: 1,
-        expression: i,
-        resetExpression: true,
-        crossOrigin: 'anonymous',
-    });
-}
-
 
 // 清除记忆
 const closeChatList = async () => {
@@ -191,17 +241,6 @@ onMounted(() => {
     }
 });
 
-// 播放音频的函数
-// 播放音频的函数
-function playAudioFunction(model, audio) {
-    let i = Math.floor(Math.random() * 11);
-    model.speak(audio, {
-        volume: 1,
-        expression: i,
-        resetExpression: true,
-        crossOrigin: 'anonymous',
-    });
-}
 
 // 鼠标离开时的处理逻辑
 const handleMouseLeave = () => {
