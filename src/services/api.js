@@ -24,7 +24,6 @@ instance.interceptors.request.use(
             return Promise.reject('没有 token，跳转到登录页面');  // 终止请求
         }
         // console.log("------------------已退出请求拦截器------------------");
-        console.log("");
 
         return config;
     },
