@@ -25,16 +25,18 @@ import { Ollama } from 'ollama'
 import Swal from 'sweetalert2';
 import { GenerateAudioUrl } from '@/services/tts';
 const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
+const ServiceUrl = 'http://localhost:8080'
 const chatStore = useChatStore();
 const userMessage = ref('');
 let fullResponse = ref('');
 const showInputBox = ref(false); // 控制输入框的显示与隐藏
-const live2dModel = ''
+const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
 const ollamaModel = 'qwen2.5:3b'
 const ttsModel = 'Naxida'
 let isAuto = ref(true);
 let audioQueue = ref([]); // 使用 ref 包装数组
 let currentText = "";
+//按照文本生成音频文件，将音频推入列表
 const playAudio = async (text) => {
     currentText = ""
     try {
@@ -47,7 +49,7 @@ const playAudio = async (text) => {
         console.error("生成音频路径失败：", error);
     }
 };
-
+//播放音频，同步模型嘴部。
 function talk(audioPath) {
     return new Promise((resolve, reject) => {
         isAuto.value = false; // 播放开始
@@ -75,11 +77,11 @@ function talk(audioPath) {
             isAuto.value = true;
             reject(err);
         });
-
+        let exp = Math.floor(Math.random() * 10) + 1;
         // 实际播放音频
         model.speak(audioPath, {
             volume: 1,
-            expression: 3,
+            expression: exp,
             resetExpression: true,
             crossOrigin: "anonymous",
         });
@@ -87,13 +89,13 @@ function talk(audioPath) {
 }
 
 
-// 监听队列
+// 监听队列播放音频
 watch(
     audioQueue,
     async () => {
         // 队列非空且当前没有在播放时触发播放
         if (audioQueue.value.length > 0 && isAuto.value) {
-            const audioPath = `http://localhost:8080${audioQueue.value[0]}`;
+            const audioPath = ServiceUrl + `${audioQueue.value[0]}`;
             try {
                 console.log("正在播放", audioPath);
                 await talk(audioPath); // 等待播放完成
@@ -148,21 +150,6 @@ const sendMessage = async () => {
 };
 
 
-// function talk(model, audioPath) {
-
-
-
-//     //不用管他
-//     model.speak(audioPath, {
-//         volume: 1,
-//         expression: 3,
-//         resetExpression: true,
-//         crossOrigin: "anonymous",
-
-//     });
-// }
-
-
 //markdown解析过滤
 function parseMarkdown(mdText) {
     // 去除标题符号（#）
@@ -190,8 +177,6 @@ function parseMarkdown(mdText) {
 
 // 清除记忆
 const closeChatList = async () => {
-
-
     chatStore.closeMessage();
     fullResponse.value = ""
     Swal.fire({
@@ -204,7 +189,6 @@ const closeChatList = async () => {
 const text = ref('你好，欢迎光临'); // 用来存储文本输入
 let model = null;
 // 确定模型
-const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
 
 onMounted(() => {
     const live2d = PIXI.live2d;
