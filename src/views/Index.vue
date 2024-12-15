@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 粒子特效 -->
-    <ParticleBackground></ParticleBackground>
+    <!-- <ParticleBackground></ParticleBackground> -->
 
     <!-- 只有在非登录和注册页面显示Header -->
     <Header v-if="showHeader" />

@@ -1,51 +1,33 @@
 <template>
-
     <div class="header">
         <div class="banner-box">
             <div class="banner-title">
-                <!-- <div class="h2">Hi! Im LiuXin</div> -->
-                <!-- <div class="h3">This is my personal blog</div> -->
-                <!-- <div class="banner-href-box">
-                    <a href="https://github.com/Liuxin4950?tab=repositories" target="_blank">
-                        <div class="banner-href">
-                            <img class="fit" src="../../assets/image/icon/github.png" alt="">
-                        </div>
-                    </a>
-                    <a href="">
-                        <div class="banner-href">
-                            <img class="fit" src="../../assets/image/icon/qq.png" alt="">
-                        </div>
-                    </a>
-                    <a href="">
-                        <div class="banner-href">
-                            <img class="fit" src="../../assets/image/icon/邮箱-合上.png" alt="">
-
-                        </div>
-                    </a>
-                    <a href="">
-                        <div class="banner-href">
-                            <img class="fit" src="../../assets/image/icon/github.png" alt="">
-
-                        </div>
-                    </a>
-
-
-                </div> -->
                 <div class="glowing-text">This is my Personal Blog</div>
-
             </div>
         </div>
+
         <div>
             <el-carousel :interval="5000" arrow="always" height="100vh">
                 <el-carousel-item>
-                    <img class="fit" src="../../assets/image/admin/blhx.png" alt="">
+                    <img class="fit" src="@/assets/image/banner/blhx.png" alt="banner image" loading="lazy" />
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img class="fit" src="@/assets/image/banner/wlcy.jpg" alt="banner image" loading="lazy" />
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img class="fit" src="@/assets/image/banner/world.png" alt="banner image" loading="lazy" />
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img class="fit" src="@/assets/image/banner/sczz.png" alt="banner image" loading="lazy" />
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img class="fit" src="@/assets/image/banner/dj.jpg" alt="banner image" loading="lazy" />
                 </el-carousel-item>
             </el-carousel>
         </div>
 
-        <div>
-            <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+        <div class="wave-container">
+            <svg class="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 24 150 28" preserveAspectRatio="none">
                 <defs>
                     <path id="gentle-wave"
                         d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
@@ -62,66 +44,39 @@
 </template>
 
 <script setup>
-
+// 若有额外逻辑需求，可以在这里编写
 </script>
 
 <style scoped>
-.glowing-text {
-    font-size: 2em;
-    /* 根据需要调整字体大小 */
-    font-weight: bold;
-    color: #fff;
-    text-shadow:
-        0 0 3px rgba(163, 215, 255, 0.9),
-        0 0 6px rgba(163, 215, 255, 0.7),
-        0 0 12px rgba(137, 197, 233, 0.5),
-        0 0 24px rgba(110, 179, 211, 0.3),
-        0 0 36px rgba(90, 162, 196, 0.1);
-    animation: typing 4s steps(2em, end), blink 0.7s step-end infinite;
-    white-space: nowrap;
-    overflow: hidden;
-    border-right: 4px solid #4aa5e2d5;
-    line-height: 1.4;
+:root {
+    --primary-color: rgba(84, 58, 183, 1);
+    --secondary-color: rgba(0, 172, 193, 1);
+    --wave-opacity-high: rgba(255, 255, 255, 0.7);
+    --wave-opacity-medium: rgba(255, 255, 255, 0.5);
+    --wave-opacity-low: rgba(255, 255, 255, 0.3);
 }
 
-@keyframes typing {
-    from {
-        width: 0;
-    }
-
-    to {
-        width: 100%;
-    }
-}
-
-@keyframes blink {
-
-    from,
-    to {
-        border-color: transparent;
-    }
-
-    50% {
-        border-color: #4aa5e2d5;
-    }
-}
-
-
-.banner-box,
 .el-carousel {
+    width: 100%;
     height: 600px;
+}
+
+.header {
+    position: relative;
+    background: linear-gradient(60deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
 }
 
 .banner-box {
-    width: 100%;
-    height: 600px;
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 9;
+    width: 100%;
+    height: 600px;
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 9;
 }
 
 .banner-title {
@@ -134,87 +89,28 @@
     justify-content: center;
 }
 
-.banner-title .h2 {
-    font-size: 65px;
-    color: white;
-
-}
-
-.banner-title .h3 {
-    font-size: 35px;
-    color: white;
-}
-
-.banner-href-box {
-    margin-top: 20px;
-    width: 100%;
-    height: 100px;
-    transform: translateX(20px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-}
-
-.banner-href {
-    margin-right: 2em;
-    padding: 10px;
-    width: 60px;
-    min-width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    background-color: #333;
-    transition: .5s;
-}
-
-.banner-href:hover {
-    background-color: #fff;
+.glowing-text {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 3px var(--wave-opacity-high), 0 0 6px var(--wave-opacity-medium),
+        0 0 12px var(--wave-opacity-low), 0 0 24px var(--primary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    line-height: 1.4;
 }
 
 
-.el-carousel {
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    /* height: calc(100vh - 70px); */
-}
 
-.header {
-    position: relative;
-    /* text-align: center; */
-    background: linear-gradient(60deg, rgba(84, 58, 183, 1) 0%, rgba(0, 172, 193, 1) 100%);
-    color: white;
-}
+
 
 .waves {
     width: 100%;
     position: absolute;
     bottom: 0;
-    left: 0;
-    width: 100%;
     height: 10vh;
-    margin-bottom: 0;
     min-height: 100px;
     max-height: 150px;
-
-}
-
-.content {
-    position: relative;
-    height: 20vh;
-    text-align: center;
-    background-color: white;
-}
-
-.content a {
-    margin: 0 5px;
-    font-size: 12px;
-    color: #333;
-}
-
-.content a:hover {
-    color: #000;
 }
 
 .parallax>use {
@@ -254,45 +150,15 @@
 @media (max-width: 768px) {
     .banner-title {
         width: 80%;
-
     }
 
-    .banner-title .h2 {
-        font-size: 40px;
-        color: white;
-
-    }
-
-    .banner-title .h3 {
-        font-size: 20px;
-        color: white;
-    }
-
-    .banner-href-box {
-        transform: translateX(0);
-
-    }
-
-
-    .banner-href {
-        margin-right: 1em;
-        width: 30px;
-        min-width: 30px;
-        height: 30px;
-        padding: 2px;
+    .banner-title .glowing-text {
+        font-size: 1.5rem;
     }
 
     .waves {
         height: 40px;
         min-height: 40px;
-    }
-
-    .content {
-        height: 30vh;
-    }
-
-    h1 {
-        font-size: 24px;
     }
 }
 </style>

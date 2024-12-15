@@ -9,7 +9,6 @@
                 <div class="control">
                     <button class="closeChatList" @click="closeChatList">清除记忆</button>
                     <button class="closeChatList" @click="playAudio">播放音频</button>
-
                     {{ fullResponse }}
                 </div>
             </div>
@@ -33,6 +32,7 @@ const showInputBox = ref(false); // 控制输入框的显示与隐藏
 const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
 const ollamaModel = 'qwen2.5:3b'
 const ttsModel = 'Naxida'
+const ttsEmotion = ['empathetic', 'chat', 'default']
 let isAuto = ref(true);
 let audioQueue = ref([]); // 使用 ref 包装数组
 let currentText = "";
@@ -43,6 +43,7 @@ const playAudio = async (text) => {
         const url = await GenerateAudioUrl({
             character: ttsModel,
             text: text,
+            emotion: ttsEmotion[2]
         });
         audioQueue.value.push(url); // 加入队列
     } catch (error) {
@@ -302,12 +303,19 @@ const handleBlur = () => {
     font-size: 12px;
     padding: 10px;
     border-radius: 10px;
-    border: 2px solid #fff;
-    background-color: rgba(108, 224, 118, 0.5);
+    border: 2px solid #313131;
     color: #157c23;
+    background: url('@/assets/image/chat/聊天框.png') no-repeat center;
+    background-size: cover;
+    /* 让图片覆盖整个背景，不会出现空白 */
+    background-repeat: no-repeat;
+    /* 确保图片不重复 */
+    background-position: center;
+    /* 图片居中 */
     resize: none;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
+
 
 input::placeholder {
     color: #267223;
@@ -328,7 +336,8 @@ input::placeholder {
     top: 100px;
     width: 190px;
     min-height: 260px;
-    background-color: #8be297c2;
+    background: url('@/assets/image/chat/聊天框.png') no-repeat center;
+
     overflow-y: auto;
     border-radius: 5px;
     display: flex;

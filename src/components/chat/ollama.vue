@@ -1,100 +1,155 @@
 <template>
-    <div class="chat-container">
-        <div class="messages">
-            <div v-for="(msg, index) in messages" :key="index" class="message">
-                <p><strong>{{ msg.role }}:</strong> {{ msg.content }}</p>
-            </div>
+    <div class="app">
+        <div class="rote">
+            你好
         </div>
-        <div class="input-area">
-            <input v-model="userInput" type="text" placeholder="请输入问题..." @keyup.enter="sendMessage" />
-            <button @click="sendMessage">发送</button>
+        <div class="roto" v-if="!isSupported">
+            浏览器不支持
+            <a href="https://caniuse.com/mdn-api_speechrecognition" target="_blank">more details</a>
+        </div>
+        <div v-else>
+            <header>
+                <h1> 语音识别 </h1>
+                <i class="header-icon fas fa-microphone-alt"></i>
+            </header>
+            <main>
+                <div class="mic-buttons">
+                    <button v-if="!isListening" @click="start">
+                        Speak
+                    </button>
+                    <button v-if="isListening" class="orange" @click="stop">
+                        Stop
+                    </button>
+                </div>
+                <h2> 翻译 </h2>
+                <p v-if="error">{{ error }}</p>
+                <div v-else>
+                    <textarea v-model="result" class="text-transcript" cols="30" rows="10">  </textarea>
+                </div>
+            </main>
         </div>
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import ollama from 'ollama';
+<script>
+import { ref, watch } from 'vue'
 
-// 定义响应式数据
-const userInput = ref(''); // 输入框的值
-const messages = ref([]);  // 消息数组
+export function useSpeechRecognition({ lang = 'zh-CN', continuous = true, interimResults = true }) {
+    const isListening = ref(false)
+    const isFinal = ref(false)
+    const result = ref('')
+    const error = ref('')
 
-// 发送消息的函数
-const sendMessage = async () => {
-    if (!userInput.value) return; // 防止发送空消息
+    // 初始化 web speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    // 检查浏览器是否支持
+    const isSupported = Boolean(SpeechRecognition)
+    // 创建构造函数
+    const recognition = isSupported ? new SpeechRecognition() : null
 
-    // 将用户输入的消息添加到消息数组中
-    messages.value.push({ role: 'user', content: userInput.value });
-    const message = { role: 'user', content: userInput.value };
-
-    try {
-        // 调用 Ollama chat API 并启用流式响应
-        const response = ollama.chat({
-            model: 'qwen2.5:7b',
-            messages: [message],
-            stream: true
-        });
-
-        // 逐步读取响应流
-        for await (const part of response) {
-            // 将流中的内容逐步添加到消息数组
-            messages.value.push({ role: 'assistant', content: part.message.content });
+    // 设置开始监听函数
+    const start = () => {
+        if (recognition && !isListening.value) {
+            isListening.value = true
+            recognition.start() // 启动语音识别
         }
-    } catch (error) {
-        console.error('聊天请求出错:', error);
-        messages.value.push({ role: 'assistant', content: '出错了，请稍后再试。' });
-    } finally {
-        userInput.value = ''; // 清空输入框
     }
-};
+
+    // 停止监听
+    const stop = () => {
+        if (recognition && isListening.value) {
+            isListening.value = false
+            recognition.stop() // 停止语音识别
+        }
+    }
+
+    // 检查浏览器是否支持
+    if (isSupported) {
+        recognition.continuous = continuous
+        recognition.interimResults = interimResults
+        recognition.lang = lang
+
+        recognition.onstart = () => {
+            isFinal.value = false
+        }
+
+        // 获得响应结果
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map((result) => {
+                    isFinal.value = result.isFinal
+                    return result[0]
+                })
+                .map(result => result.transcript)
+                .join('')
+
+            result.value = transcript
+            error.value = undefined
+        }
+
+        // 错误处理
+        recognition.onerror = (event) => {
+            error.value = 'Speech recognition error detected: ' + event.error
+        }
+
+        recognition.onend = () => {
+            isListening.value = false
+        }
+
+        watch(isListening, () => {
+            if (isListening.value) recognition.start()
+            else recognition.stop()
+        })
+    }
+
+    // 返回需要的状态和方法
+    return {
+        isSupported,
+        isListening,
+        isFinal,
+        result,
+        error,
+        start,
+        stop
+    }
+}
 </script>
 
 <style scoped>
-.chat-container {
-    width: 600px;
-    margin: 0 auto;
+@keyframes rote {
+    from {
+        transform: rotate(0);
+        background-color: aqua;
+    }
+
+    to {
+        transform: rotate(360deg);
+        background-color: blueviolet;
+
+    }
+}
+
+.rote {
+    width: 500px;
+    height: 500px;
+    background-color: blueviolet;
+    transform: rotate(0);
+    animation: rote 1s ease infinite reverse;
+}
+
+.app {
     padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
 }
 
-.messages {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 10px;
+.mic-buttons button {
+    margin: 10px;
 }
 
-.message {
-    padding: 10px;
-    margin: 5px 0;
-    background-color: #e0e0e0;
-    border-radius: 5px;
+.orange {
+    background-color: orange;
 }
 
-.input-area {
-    display: flex;
-    gap: 10px;
-}
-
-input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-button {
-    padding: 8px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
+.text-transcript {
+    width: 100%;
 }
 </style>

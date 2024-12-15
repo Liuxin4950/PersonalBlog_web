@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="app">
     <!-- 这里是加载动画显示逻辑 -->
     <Loading class="loading" v-if="isLoading" />
     <Index />

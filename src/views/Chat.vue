@@ -3,12 +3,6 @@
     <div class="content">
       <!-- 聊天信息展示部分 -->
       <div class="chatlist">
-        <div class="chatheader">
-          <div class="header-title">ChatTTS</div>
-          <div class="user-info">
-            <img src="../assets/image/admin/kk.gif" alt="user" />
-          </div>
-        </div>
         <div class="chatlist-box">
           <div v-for="(message, index) in chatStore.messages" :key="index" class="message"
             :class="{ 'chatlist-user': message.name === 'user', 'chatlist-ai': message.name !== 'user' }">
@@ -38,9 +32,6 @@ import ollama from 'ollama/browser'; // 确保在浏览器环境下使用
 import Swal from 'sweetalert2';
 import { marked } from 'marked';
 
-
-
-
 const chatStore = useChatStore();
 const userMessage = ref('');
 const isInputDisabled = ref(false);
@@ -58,7 +49,7 @@ const sendMessage = async () => {
     // 将当前消息和之前的对话一并发送给 Ollama
     const message = { role: 'user', content: userMessage.value };
     const response = await ollama.chat({
-      model: 'naxida:latest',  // 使用的模型
+      model: 'qwen2.5:3b',  // 使用的模型
       messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
       stream: true,  // 启用流式响应
     });
@@ -84,41 +75,17 @@ const sendMessage = async () => {
 <style scoped>
 .content {
   width: 1300px;
+  min-height: calc(100vh -70px);
 }
 
 /* 聊窗口队列 */
 .chatlist {
   width: 100%;
-  height: calc(100% - 60px);
   background-color: white;
+  height: 100%;
+  overflow-y: auto;
 }
 
-.chatheader {
-  width: 100%;
-  height: 60px;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-title {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.user-info {
-  display: flex;
-}
-
-.user-info img {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: cadetblue;
-  color: white;
-  padding: 5px;
-}
 
 .chatlist-box {
   padding: 1rem;
