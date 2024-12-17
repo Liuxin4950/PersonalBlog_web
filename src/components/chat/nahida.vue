@@ -13,35 +13,75 @@
                     <div class="control-tool f fb">
                         <button class="closeChatList" @click="activeIndex = 0">聊天页面</button>
                         <button class="closeChatList" @click="activeIndex = 1">控制面板</button>
-
                     </div>
 
-                    <div v-show="activeIndex == 1" class="control-tool f fb fw">
-                        <button class="closeChatList">当前模型:
-                            <input type="text" v-model="ollamaModel">
-                        </button>
-                        <button class="closeChatList">当前语言模型:
-                            <input type="text" v-model="ttsModel">
-                        </button>
-                        <button class="closeChatList">
-                            当前语言情绪:
-                            <select v-model="selectedEmotion">
-                                <option v-for="emotion in ttsEmotion" :key="emotion" :value="emotion">
-                                    {{ emotion }}
-                                </option>
-                            </select>
-                        </button>
+                    <div v-if="activeIndex == 1" class="control-tool">
 
-                        <button class="closeChatList" @click="closeChatList">清除记忆</button>
+                        <div class="f">
+                            <!-- 聊天模型 -->
+                            <button class="closeChatList">
+                                聊天模型:
+                                <input type="text" v-model="form.ollamaModel" placeholder="输入聊天模型" />
+                            </button>
+
+                            <!-- 语言模型 -->
+                            <button class="closeChatList">
+                                语言模型:
+                                <input type="text" v-model="form.ttsModel" placeholder="输入语言模型" />
+                            </button>
+                        </div>
+
+                        <div class="f">
+                            <!-- 当前情绪选择 -->
+                            <button class="closeChatList">
+                                当前情绪:
+                                <select v-model="form.selectedEmotion">
+                                    <option v-for="emotion in ttsEmotion" :key="emotion" :value="emotion">
+                                        {{ emotion }}
+                                    </option>
+                                </select>
+                            </button>
+
+                            <!-- 切分字数 -->
+                            <button class="closeChatList">
+                                切分字数:
+                                <input type="number" v-model.number="len" placeholder="输入字数" />
+                            </button>
+                        </div>
+
+                        <div class="f">
+                            <!-- Top K 设置 -->
+                            <button class="closeChatList">
+                                Top K:
+                                <input type="number" v-model.number="form.top_k" placeholder="输入 Top K" />
+                            </button>
+
+                            <!-- Top P 设置 -->
+                            <button class="closeChatList">
+                                Top P:
+                                <input type="number" step="0.1" v-model.number="form.top_p" placeholder="输入 Top P" />
+                            </button>
+                            <button class="closeChatList">
+                                speed:
+                                <input type="number" step="0.1" v-model.number="form.speed" placeholder="输入 speed" />
+                            </button>
+
+                        </div>
+                        <!-- Temperature 设置 -->
+
+                        <button class="closeChatList">
+                            Temperature:
+                            <input type="number" step="0.1" v-model.number="form.temperature" placeholder="输入温度值" />
+                        </button>
+                        <!-- 提交和操作按钮 -->
                         <button class="closeChatList" @click="textAudio">播放音频</button>
+                        <button class="closeChatList" @click="closeChatList">重置记忆</button>
                         <button class="closeChatList" @click="fullResponse = ''">隐藏</button>
                         <router-link :to="`/chat`">
-                            <button class="closeChatList">
-                                查看记忆
-                            </button>
+                            <button class="closeChatList">查看记忆</button>
                         </router-link>
                     </div>
-                    <div id="markdown" class="control-chat" v-html="fullResponse"></div>
+                    <div v-else id="markdown" class="control-chat" v-html="fullResponse"></div>
                 </div>
             </div>
         </transition>
@@ -51,14 +91,14 @@
 
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, reactive, toRaw } from 'vue';
 import { useChatStore } from '@/store/chatStore';
 import { Ollama } from 'ollama'
 import Swal from 'sweetalert2';
 import { GenerateAudioUrl } from '@/services/tts';
 import { marked } from 'marked';
 // 定义当前激活的页面索引
-const activeIndex = ref(0);
+const activeIndex = ref(1);
 const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
 const ServiceUrl = 'http://localhost:8080'
 const chatStore = useChatStore();
@@ -69,7 +109,20 @@ const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
 const ollamaModel = ref('qwen2.5:3b')
 const ttsModel = 'Naxida'
 const ttsEmotion = ['default', 'chat', 'empathetic']//情绪
-const selectedEmotion = ref(ttsEmotion[0]); // 默认选择第一个情绪
+const len = ref(10)
+// 表单参数集合
+const form = reactive({
+    ollamaModel: "qwen2.5:3b",
+    ttsModel: "Naxida",
+    selectedEmotion: ttsEmotion[0],
+    batch_size: 50,
+    top_k: 5,
+    top_p: 0.8,
+    temperature: 0.8,
+    text: "",
+    speed: 1,
+});
+
 
 let isAuto = ref(true);
 let audioQueue = ref([]); // 使用 ref 包装数组
@@ -85,12 +138,12 @@ const textAudio = async () => {
 
 //按照文本生成音频文件，将音频推入列表
 const playAudio = async (text) => {
-    currentText = ""
+    activeIndex.value = 0//切换到聊天窗口
+    currentText = ""//清空已经推理的文本
     try {
         const url = await GenerateAudioUrl({
-            character: ttsModel,
-            text: text,
-            emotion: selectedEmotion.value
+            ...toRaw(form),
+            text
         });
         audioQueue.value.push(url); // 加入队列
     } catch (error) {
@@ -164,7 +217,7 @@ const sendMessage = async () => {
     userMessage.value = "";
     try {
         const response = await ollama.chat({
-            model: ollamaModel.value,
+            model: form.ollamaModel,
             messages: chatStore.messages.map((msg) => ({
                 role: msg.name === "user" ? "user" : "assistant",
                 content: msg.text,
@@ -176,8 +229,8 @@ const sendMessage = async () => {
             currentText += part.message.content;
 
             // 每 50 字生成一次音频
-            if (currentText.length >= 50 && currentText.endsWith('。')) {
-                console.log("生成的部分文本：", currentText);
+            if (currentText.length >= len.value && currentText.endsWith('。')) {
+                console.log("生成的文本长度：", currentText.length);
                 fullResponse.value += marked(currentText);
                 await playAudio(currentText);
             }
@@ -236,7 +289,7 @@ onMounted(() => {
 
             // 仅缩放宽度
             m.scale.set(scale, scale);
-            m.scale.x = scale * scaleX;  // 修改宽度
+            m.scale.x = scale * scaleX;
 
             // 固定到页面左下角，调整位置
             m.x = 0;
@@ -376,11 +429,12 @@ input::placeholder {
 
     .control-tool {
         width: 100%;
+        height: auto;
     }
 
     #markdown {
         width: 100%;
-        height: 100%;
+        height: auto;
         padding: 0 5px;
         background-color: #cef8d4;
     }
@@ -389,6 +443,7 @@ input::placeholder {
 
 // 按钮
 .closeChatList {
+    width: 100%;
     border: #157c23;
     background-color: #3f9b4b;
     padding: 5px;
@@ -396,6 +451,11 @@ input::placeholder {
     color: white;
     transition: .5s;
     margin-bottom: 5px;
+
+    input {
+        width: 100%;
+        padding: 0.1em;
+    }
 }
 
 .closeChatList:hover {

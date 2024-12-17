@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-// 若有额外逻辑需求，可以在这里编写
+
 </script>
 
 <style scoped>
@@ -62,6 +62,7 @@
 }
 
 .header {
+    width: 100%;
     position: relative;
     background: linear-gradient(60deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
@@ -99,10 +100,6 @@
     overflow: hidden;
     line-height: 1.4;
 }
-
-
-
-
 
 .waves {
     width: 100%;

@@ -17,21 +17,14 @@
           <img class="icon" src="../../assets/image/icon/关于我们.png" alt="About">
           <router-link to="/about" class="navbar-link" exact-active-class="active-link">About</router-link>
         </li>
-        <li class="navbar-item">
-          <img class="icon" src="../../assets/image/icon/关于我们.png" alt="Nahida">
-          <router-link to="/chat/nahida" class="navbar-link" exact-active-class="active-link">Info</router-link>
-        </li>
-        <li class="navbar-item">
-          <img class="icon" src="../../assets/image/icon/关于我们.png" alt="Ollama">
-          <router-link to="/chat/ollama" class="navbar-link" exact-active-class="active-link">Ollama</router-link>
-        </li>
 
 
-        <li class="navbar-item navbar-user-container" @contextmenu.prevent="showMenu">
+        <li class="navbar-item navbar-user-container" @mouseover="showMenu" @mouseleave="hideMenu">
           <span class="navbar-user">
             {{ currentUser ? currentUser : 'Login In' }}
           </span>
           <img class="header-avatar" :src="currentUserImage" alt="无">
+          <!-- 自动显示的菜单 -->
           <div v-if="menuVisible" class="context-menu" ref="contextMenu">
             <ul>
               <li @click="viewProfile">个人信息</li>
@@ -39,6 +32,7 @@
             </ul>
           </div>
         </li>
+
       </ul>
     </nav>
   </div>
@@ -105,12 +99,9 @@ const handleScroll = () => {
     });
   }
 };
-
-// 右键显示菜单，淡入效果
-const showMenu = (event) => {
-  event.preventDefault();
+// 鼠标悬停时显示菜单
+const showMenu = () => {
   menuVisible.value = true;
-
   anime({
     targets: contextMenu.value,
     opacity: [0, 1],
@@ -120,7 +111,7 @@ const showMenu = (event) => {
   });
 };
 
-// 隐藏菜单
+// 鼠标移出时隐藏菜单
 const hideMenu = () => {
   if (menuVisible.value) {
     anime({
@@ -133,6 +124,7 @@ const hideMenu = () => {
     });
   }
 };
+
 // 个人信息
 const viewProfile = () => {
   console.log("查询用户id:" + userStore.value.id);
@@ -167,7 +159,6 @@ const logout = () => {
   console.log('已退出登录');
 };
 
-document.addEventListener('click', hideMenu);
 </script>
 
 <style lang="scss" scoped>
@@ -223,13 +214,26 @@ document.addEventListener('click', hideMenu);
   transition: all 0.3s ease;
   position: relative;
   font-weight: bold;
+
+  &:hover {
+    animation: rainbowText 1s infinite alternate;
+  }
 }
 
-.navbar-link:hover {
-  color: #1A759F;
+@keyframes rainbowText {
+  0% {
+    color: #ff66cc;
+  }
 
-  transform: scale(1.1);
+  50% {
+    color: #4f9ad8;
+  }
+
+  100% {
+    color: #ffd700;
+  }
 }
+
 
 .navbar-link.router-link-active {
   font-weight: bold;
@@ -280,18 +284,52 @@ document.addEventListener('click', hideMenu);
   background-color: #1A759F;
   border-radius: 50%;
   margin-left: 10px;
+  border: 2px solid transparent;
+  background-image: linear-gradient(white, white),
+    linear-gradient(135deg, #ff66cc, #4f9ad8, #ffd700, #32cd32);
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+  animation: avatarGlow 2s linear infinite;
 }
 
-.context-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  border-radius: 10px;
-  padding: 10px;
-  opacity: 0; // 初始设置为透明
-  display: flex;
-  flex-direction: column;
+@keyframes avatarGlow {
+  0% {
+    transform: rotate(0deg);
+    border-color: #ff66cc;
+  }
+
+  50% {
+    border-color: #ffd700;
+  }
+
+  100% {
+    transform: rotate(360deg);
+    border-color: #32cd32;
+  }
 }
+
+
+.context-menu {
+  background: linear-gradient(135deg, rgba(255, 102, 204, 0.8), rgba(79, 154, 216, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  transform-origin: top;
+  transition: all 0.3s ease-out;
+  position: absolute;
+  left: 30px;
+  bottom: -95px;
+
+  ul li {
+    transition: all 0.2s;
+  }
+
+  ul li:hover {
+    transform: scale(1.1);
+    color: #ffeb3b;
+  }
+}
+
 
 .context-menu ul {
   padding: 0;
@@ -306,7 +344,6 @@ document.addEventListener('click', hideMenu);
   padding: .5em 1em;
   cursor: pointer;
   font-size: 1.1em;
-  transition: background 0.3s ease;
   color: var(--text2-color);
 }
 

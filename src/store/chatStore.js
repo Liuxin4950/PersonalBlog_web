@@ -7,7 +7,7 @@ export const useChatStore = defineStore('chat', {
   }),
   actions: {
     addMessage(message) {
-      console.log('添加消息:', message); // 添加调试日志
+      // console.log('添加消息:', message); // 添加调试日志
       this.messages.push(message); // 将消息添加到 messages 数组
     },
     closeMessage() {
