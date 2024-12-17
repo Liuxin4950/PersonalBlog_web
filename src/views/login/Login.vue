@@ -4,46 +4,53 @@
         <div class="background-gradient"></div>
 
         <!-- 登录表单容器 -->
-        <div class="login-container" ref="loginContainer">
-            <!-- 登录标题 -->
-            <h2>{{ isLogin ? '登录' : '注册' }}</h2>
+        <div class="container">
+            <div class="login-container" ref="loginContainer">
+                <img src="@/assets/image/banner/ht.jpg" class="fit" alt="">
+            </div>
 
-            <!-- 登录/注册表单 -->
-            <form @submit.prevent="handleSubmit">
-                <!-- 用户名 -->
-                <div class="form-group">
-                    <label for="username">用户名</label>
-                    <input type="text" id="username" placeholder="请输入用户名" v-model="username" required />
-                </div>
+            <div class="login-container" ref="loginContainer">
+                <!-- 登录标题 -->
+                <h2>{{ isLogin ? '登录' : '注册' }}</h2>
 
-                <!-- 密码 -->
-                <div class="form-group">
-                    <label for="password">密码</label>
-                    <input type="password" id="password" placeholder="请输入密码" v-model="password" required />
-                </div>
-
-                <!-- 注册时特有的输入框 -->
-                <div v-show="!isLogin">
+                <!-- 登录/注册表单 -->
+                <form @submit.prevent="handleSubmit">
+                    <!-- 用户名 -->
                     <div class="form-group">
-                        <label for="email">邮箱</label>
-                        <input type="email" id="email" placeholder="请输入邮箱" v-model="email" />
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" placeholder="请输入用户名" v-model="username" required />
                     </div>
+
+                    <!-- 密码 -->
                     <div class="form-group">
-                        <label for="phone">电话</label>
-                        <input type="tel" id="phone" placeholder="请输入电话号码" v-model="phone" />
+                        <label for="password">密码</label>
+                        <input type="password" id="password" placeholder="请输入密码" v-model="password" required />
                     </div>
-                </div>
 
-                <!-- 提交按钮 -->
-                <button type="submit">{{ isLogin ? '登录' : '注册' }}</button>
-            </form>
+                    <!-- 注册时特有的输入框 -->
+                    <div v-show="!isLogin">
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" placeholder="请输入邮箱" v-model="email" />
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">电话</label>
+                            <input type="tel" id="phone" placeholder="请输入电话号码" v-model="phone" />
+                        </div>
+                    </div>
 
-            <!-- 切换登录和注册 -->
-            <p class="toggle-link">
-                {{ isLogin ? '还没有账号？' : '已有账号？' }}
-                <a @click="toggleAuth">{{ isLogin ? '注册' : '登录' }}</a>
-            </p>
+                    <!-- 提交按钮 -->
+                    <button type="submit">{{ isLogin ? '登录' : '注册' }}</button>
+                </form>
+
+                <!-- 切换登录和注册 -->
+                <p class="toggle-link">
+                    {{ isLogin ? '还没有账号？' : '已有账号？' }}
+                    <a @click="toggleAuth">{{ isLogin ? '注册' : '登录' }}</a>
+                </p>
+            </div>
         </div>
+
     </div>
 </template>
 
@@ -73,16 +80,18 @@ const toggleAuth = () => {
     animateForm();
 };
 //动画效果
+// 动画效果：控制登录/注册容器宽度变化
 const animateForm = () => {
+    // 切换容器宽度（400px -> 500px）
     anime({
         targets: '.login-container',
-        width: isLogin.value ? '400px' : '500px', // 从400px变为500px（注册时更宽）
+        width: isLogin.value ? '400px' : '500px',
         opacity: [0, 1],
         easing: 'easeOutElastic',
         duration: 800,
     });
 
-    // 动画效果：输入框和按钮逐个出现
+    // 输入框和按钮动画
     anime({
         targets: '.form-group',
         opacity: [0, 1],
@@ -100,6 +109,7 @@ const animateForm = () => {
         duration: 800,
     });
 };
+
 
 const handleSubmit = async () => {
     console.log("触发登录请求成功");
@@ -206,21 +216,37 @@ onMounted(() => {
     }
 }
 
-.login-container {
-    width: 400px;
+.container {
+    width: 700px;
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    opacity: 0;
-    transform: translateY(50px);
-    transition: width 0.8s ease, opacity 0.8s ease;
+    display: flex;
+    justify-content: center;
+    /* 确保居中 */
 }
+
+.login-container {
+    width: 400px;
+    padding: 30px 15px;
+    backdrop-filter: blur(10px);
+    box-sizing: border-box;
+    transition: width 0.8s ease-out;
+    /* 增加过渡效果 */
+}
+
+/* 保证当切换状态时，容器宽度动画效果生效 */
+.login-container.show {
+    width: 500px;
+    /* 注册时容器宽度增大 */
+}
+
 
 h2 {
     font-size: 2.5em;
-    text-align: center;
+    text-align: left;
     margin-bottom: 20px;
     color: #ff8c00;
 }
