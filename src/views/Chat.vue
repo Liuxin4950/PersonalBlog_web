@@ -28,10 +28,12 @@
 <script setup>
 import { ref } from 'vue';
 import { useChatStore } from '../store/chatStore';
-import ollama from 'ollama/browser'; // 确保在浏览器环境下使用
+import { Ollama } from 'ollama'
 import Swal from 'sweetalert2';
 import { marked } from 'marked';
-
+const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
+const ollamaModel = 'qwen2.5:3b'
+const ttsModel = 'Naxida'
 const chatStore = useChatStore();
 const userMessage = ref('');
 const isInputDisabled = ref(false);
@@ -44,32 +46,30 @@ const sendMessage = async () => {
   // 清空输入框
   userMessage.value = '';
   let fullResponse = ref('');
-
+  let currentText = '';
   try {
-    // 将当前消息和之前的对话一并发送给 Ollama
-    const message = { role: 'user', content: userMessage.value };
     const response = await ollama.chat({
-      model: 'qwen2.5:3b',  // 使用的模型
-      messages: chatStore.messages.map(msg => ({ role: msg.name === 'user' ? 'user' : 'assistant', content: msg.text })),
-      stream: true,  // 启用流式响应
+      model: ollamaModel,
+      messages: chatStore.messages.map((msg) => ({
+        role: msg.name === "user" ? "user" : "assistant",
+        content: msg.text,
+      })),
+      stream: true, // 启用流式响应
     });
 
-    // 处理流式响应并更新消息
     for await (const part of response) {
-      fullResponse.value += part.message.content; // 拼接消息内容
+      currentText += part.message.content;
     }
-    chatStore.addMessage({ name: 'Nahida', text: marked(fullResponse.value) }); // 更新消息列表
+    fullResponse.value += marked(currentText);
 
+    chatStore.addMessage({ name: ttsModel, text: fullResponse.value });
   } catch (error) {
-    console.error('Ollama API 错误:', error);
-    Swal.fire('错误', '发送消息失败', 'error');
+    console.error("Ollama API 错误:", error);
+    Swal.fire("错误", "发送消息失败", "error");
   }
 };
 </script>
 
-<style scoped>
-/* 样式不变，保持与原来的代码一致 */
-</style>
 
 
 <style scoped>

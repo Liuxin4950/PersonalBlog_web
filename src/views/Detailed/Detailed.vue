@@ -144,6 +144,7 @@ const reloadPage = () => {
 <style lang="scss" scoped>
 .content {
     max-width: 1340px;
+    height: auto !important;
     margin: 0 auto;
     padding: 20px;
     position: relative;

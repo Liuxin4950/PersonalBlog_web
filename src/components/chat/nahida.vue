@@ -3,13 +3,45 @@
         <!-- 输入框放置在模型头部 -->
         <transition name="fade">
             <div class="input-container" v-show="showInputBox">
-                <input v-model="userMessage" placeholder="请输入文本" class="input-box" @keyup.enter="sendMessage"
-                    @focus="showInputBox = true" @blur="handleBlur">
-                </input>
-                <div class="control">
-                    <button class="closeChatList" @click="closeChatList">清除记忆</button>
-                    <button class="closeChatList" @click="playAudio">播放音频</button>
-                    {{ fullResponse }}
+                <div class="input-box">
+                    <input class="input" v-model="userMessage" placeholder="请输入文本" @keyup.enter="sendMessage"
+                        @focus="showInputBox = true" @blur="handleBlur">
+                    </input>
+                </div>
+
+                <div class="control" v-show="fullResponse !== ' '">
+                    <div class="control-tool f fb">
+                        <button class="closeChatList" @click="activeIndex = 0">聊天页面</button>
+                        <button class="closeChatList" @click="activeIndex = 1">控制面板</button>
+
+                    </div>
+
+                    <div v-show="activeIndex == 1" class="control-tool f fb fw">
+                        <button class="closeChatList">当前模型:
+                            <input type="text" v-model="ollamaModel">
+                        </button>
+                        <button class="closeChatList">当前语言模型:
+                            <input type="text" v-model="ttsModel">
+                        </button>
+                        <button class="closeChatList">
+                            当前语言情绪:
+                            <select v-model="selectedEmotion">
+                                <option v-for="emotion in ttsEmotion" :key="emotion" :value="emotion">
+                                    {{ emotion }}
+                                </option>
+                            </select>
+                        </button>
+
+                        <button class="closeChatList" @click="closeChatList">清除记忆</button>
+                        <button class="closeChatList" @click="textAudio">播放音频</button>
+                        <button class="closeChatList" @click="fullResponse = ''">隐藏</button>
+                        <router-link :to="`/chat`">
+                            <button class="closeChatList">
+                                查看记忆
+                            </button>
+                        </router-link>
+                    </div>
+                    <div id="markdown" class="control-chat" v-html="fullResponse"></div>
                 </div>
             </div>
         </transition>
@@ -17,12 +49,16 @@
     </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useChatStore } from '@/store/chatStore';
 import { Ollama } from 'ollama'
 import Swal from 'sweetalert2';
 import { GenerateAudioUrl } from '@/services/tts';
+import { marked } from 'marked';
+// 定义当前激活的页面索引
+const activeIndex = ref(0);
 const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
 const ServiceUrl = 'http://localhost:8080'
 const chatStore = useChatStore();
@@ -30,12 +66,23 @@ const userMessage = ref('');
 let fullResponse = ref('');
 const showInputBox = ref(false); // 控制输入框的显示与隐藏
 const cubism4Model = '/public/live2d/model/Nahida/Nahida_1080.model3.json';
-const ollamaModel = 'qwen2.5:3b'
+const ollamaModel = ref('qwen2.5:3b')
 const ttsModel = 'Naxida'
-const ttsEmotion = ['empathetic', 'chat', 'default']
+const ttsEmotion = ['default', 'chat', 'empathetic']//情绪
+const selectedEmotion = ref(ttsEmotion[0]); // 默认选择第一个情绪
+
 let isAuto = ref(true);
 let audioQueue = ref([]); // 使用 ref 包装数组
 let currentText = "";
+
+const textAudio = async () => {
+
+    const audioPath = ServiceUrl + `/tts_outputs/Believe in You-nonoc.m4a`;
+    console.log("正在播放", audioPath);
+    await talk(audioPath); // 等待播放完成
+    audioQueue.value.shift(); // 播放完成后移除队列
+}
+
 //按照文本生成音频文件，将音频推入列表
 const playAudio = async (text) => {
     currentText = ""
@@ -43,7 +90,7 @@ const playAudio = async (text) => {
         const url = await GenerateAudioUrl({
             character: ttsModel,
             text: text,
-            emotion: ttsEmotion[2]
+            emotion: selectedEmotion.value
         });
         audioQueue.value.push(url); // 加入队列
     } catch (error) {
@@ -115,10 +162,9 @@ const sendMessage = async () => {
     fullResponse.value = ""; // 清空响应
     chatStore.addMessage({ name: "user", text: userMessage.value });
     userMessage.value = "";
-
     try {
         const response = await ollama.chat({
-            model: ollamaModel,
+            model: ollamaModel.value,
             messages: chatStore.messages.map((msg) => ({
                 role: msg.name === "user" ? "user" : "assistant",
                 content: msg.text,
@@ -127,19 +173,19 @@ const sendMessage = async () => {
         });
 
         for await (const part of response) {
-            currentText += parseMarkdown(part.message.content);
-            fullResponse.value += part.message.content;
+            currentText += part.message.content;
 
             // 每 50 字生成一次音频
-            if (currentText.length >= 50) {
-                console.log("生成的部分文本长度：", currentText.length);
+            if (currentText.length >= 50 && currentText.endsWith('。')) {
+                console.log("生成的部分文本：", currentText);
+                fullResponse.value += marked(currentText);
                 await playAudio(currentText);
             }
         }
-
         // 播放剩余文本
         if (currentText.length > 0) {
             console.log("最后生成的文本长度：", currentText.length);
+            fullResponse.value += marked(currentText);
             await playAudio(currentText);
         }
 
@@ -150,31 +196,6 @@ const sendMessage = async () => {
     }
 };
 
-
-//markdown解析过滤
-function parseMarkdown(mdText) {
-    // 去除标题符号（#）
-    mdText = mdText.replace(/^#{1,6}\s+/g, ''); // 去除标题
-    // 去除加粗符号（** 或 __）
-    mdText = mdText.replace(/\*\*|\_\_/g, '');
-    // 去除斜体符号（* 或 _）
-    mdText = mdText.replace(/\*|\_/g, '');
-    // 去除无序列表符号（* 或 -）
-    mdText = mdText.replace(/^\s*[\*\-]\s+/gm, '');
-    // 去除有序列表符号（数字.）
-    mdText = mdText.replace(/^\s*\d+\.\s+/gm, '');
-    // 去除链接和图片语法
-    mdText = mdText.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1'); // 链接
-    mdText = mdText.replace(/!\[([^\]]+)\]\([^\)]+\)/g, '$1'); // 图片
-    // 去除代码块和代码行
-    mdText = mdText.replace(/```[\s\S]*?```/g, ''); // 多行代码块
-    mdText = mdText.replace(/`[^`]+`/g, ''); // 单行代码
-
-    // 在每个句点 (。) 后面加上换行符
-    mdText = mdText.replace(/。/g, '。\n');
-
-    return mdText;
-}
 
 // 清除记忆
 const closeChatList = async () => {
@@ -197,9 +218,9 @@ onMounted(() => {
     const app = new PIXI.Application({
         view: document.getElementById('canvas'),
         autoStart: true,
-        resizeTo: window,  // 自动适应窗口尺寸
+        antialias: true,
         backgroundAlpha: 0, // 保持透明背景
-        resolution: window.devicePixelRatio || 1, // 提高清晰度
+        resolution: window.devicePixelRatio || 2,
         clearBeforeRender: true,
     });
 
@@ -208,12 +229,19 @@ onMounted(() => {
 
         models.forEach((m) => {
             app.stage.addChild(m);
-            const scaleX = app.screen.width / m.width;
-            const scaleY = app.screen.height / m.height;
 
-            // 适配屏幕尺寸
-            m.scale.set(Math.min(scaleX, scaleY));
-            m.y = 50; // 留出空间给输入框
+            // 设置最大/最小缩放比例，控制模型宽度
+            const scale = .13;  // 设置一个基础缩放比例（解决在高分辨率下变窄的问题）
+            const scaleX = 2.5; // 增大宽度，比例可以根据需要调整
+
+            // 仅缩放宽度
+            m.scale.set(scale, scale);
+            m.scale.x = scale * scaleX;  // 修改宽度
+
+            // 固定到页面左下角，调整位置
+            m.x = 0;
+            m.y = 0;
+
             draggable(m);
         });
 
@@ -252,7 +280,7 @@ onMounted(() => {
 // 鼠标离开时的处理逻辑
 const handleMouseLeave = () => {
     // 当鼠标离开并且输入框没有聚焦时，才隐藏输入框
-    if (document.activeElement !== document.querySelector('.input-box')) {
+    if (document.activeElement !== document.querySelector('.input')) {
         showInputBox.value = false;
     }
 }
@@ -276,16 +304,17 @@ const handleBlur = () => {
 }
 
 #canvas {
-    width: 200%;
+    width: 100%;
     transform: translateX(-30%);
     height: 100%;
     display: block;
     position: absolute;
+    transform: translateX(-80px);
 }
 
 .input-container {
     width: 100%;
-    height: 50px;
+    height: 40px;
     position: absolute;
     top: 0;
     left: 50%;
@@ -300,25 +329,24 @@ const handleBlur = () => {
 .input-box {
     width: 100%;
     height: 100%;
-    font-size: 12px;
-    padding: 10px;
     border-radius: 10px;
     border: 2px solid #313131;
-    color: #157c23;
-    background: url('@/assets/image/chat/聊天框.png') no-repeat center;
-    background-size: cover;
-    /* 让图片覆盖整个背景，不会出现空白 */
-    background-repeat: no-repeat;
-    /* 确保图片不重复 */
-    background-position: center;
-    /* 图片居中 */
-    resize: none;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+
+    input {
+        width: 100%;
+        height: 100%;
+        padding-left: 10px;
+        color: #3bb34b;
+        font-size: 16px;
+    }
 }
 
 
 input::placeholder {
-    color: #267223;
+    color: #3fa73b;
     /* 设置占位符文字颜色 */
     font-size: 16px;
     /* 设置占位符文字大小 */
@@ -333,28 +361,41 @@ input::placeholder {
     padding: .5em;
     position: absolute;
     right: 0;
-    top: 100px;
-    width: 190px;
-    min-height: 260px;
-    background: url('@/assets/image/chat/聊天框.png') no-repeat center;
-
+    top: 70px;
+    width: 200px;
+    min-height: 280px;
+    background-color: #30af41de;
     overflow-y: auto;
     border-radius: 5px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     font-size: 12px;
-    color: #2f8808;
+    color: #bcf878;
+    overflow-y: auto;
+
+    .control-tool {
+        width: 100%;
+    }
+
+    #markdown {
+        width: 100%;
+        height: 100%;
+        padding: 0 5px;
+        background-color: #cef8d4;
+    }
 
 }
 
+// 按钮
 .closeChatList {
     border: #157c23;
-    background-color: #3bb34b;
+    background-color: #3f9b4b;
     padding: 5px;
     border-radius: 5px;
     color: white;
     transition: .5s;
+    margin-bottom: 5px;
 }
 
 .closeChatList:hover {
@@ -369,10 +410,7 @@ input::placeholder {
 }
 
 .fade-enter,
-.fade-leave-to
-
-/* .fade-leave-active in <2.1.8 */
-    {
+.fade-leave-to {
     opacity: 0;
 }
 </style>

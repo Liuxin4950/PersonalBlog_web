@@ -81,7 +81,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-model {
-    width: 500px;
+    width: 400px;
     height: 600px;
     z-index: 10;
     position: fixed;

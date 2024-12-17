@@ -8,21 +8,23 @@
                     </div>
                     <div class="list-right">
                         <div>
-                            <div class="f ac">
-                                <!-- 动态选择图标 -->
-                                <img v-if="getCategoryIcon(item.category_id)" class="icon"
-                                    :src="getCategoryIcon(item.category_id)" alt="">
-                                <h4 class="type">{{ item.category_name }}</h4>
+                            <div class="f ac fb">
+                                <div class="f ac">
+                                    <img v-if="getCategoryIcon(item.category_id)" class="icon"
+                                        :src="getCategoryIcon(item.category_id)" alt="">
+                                    <h4 class="type">{{ item.category_name }}</h4>
+                                </div>
+                                <div v-if="isDel" class="del" @click="confirmDelete(item.id, index)">
+                                    删除
+                                </div>
                             </div>
                             <h2 class="title">{{ item.title }}</h2>
                             <p>{{ item.summary }}</p>
                         </div>
-
                         <div class="list-right-bot">
                             <div class="line"></div>
                             <div class="bot f fb ac w">
-                                <div class="f">{{ new Date(item.created_at).toLocaleDateString('en-CA') }}
-                                </div>
+                                <div class="f">{{ new Date(item.created_at).toLocaleDateString('en-CA') }}</div>
                                 <div class="f ac">
                                     <div class="f ac">
                                         <img class="icon" src="../assets/image/icon/guankan.png" alt="">
@@ -34,33 +36,73 @@
                     </div>
                 </div>
             </router-link>
-
         </el-card>
     </div>
 </template>
 
 <script setup>
-import jsIcon from "@/assets/image/icon/js.png";
-import shIcon from "@/assets/image/icon/sh.png";
-import fxIcon from "@/assets/image/icon/fx.png";
-// 计算函数来动态返回不同类别的图标路径
-function getCategoryIcon(categoryId) {
-    if (categoryId === 1) return jsIcon;
-    if (categoryId === 2) return shIcon;
-    if (categoryId === 3) return fxIcon;
-    return null; // 无匹配的情况下不显示图标
-}
+import Swal from 'sweetalert2';
+import { deleteArticle } from "@/services/postService";
+
+// 接收父组件传递的 `articles` 和 `isDel`
 const props = defineProps({
     articles: {
         type: Array,
         default: () => [],
     },
+    isDel: {
+        type: Boolean,
+        default: false, // 默认不显示删除按钮
+    },
 });
 
-console.log(props.articles); // 在组件中检查数据是否传递正确
+// 方法：获取不同类别的图标
+import jsIcon from "@/assets/image/icon/js.png";
+import shIcon from "@/assets/image/icon/sh.png";
+import fxIcon from "@/assets/image/icon/fx.png";
 
+function getCategoryIcon(categoryId) {
+    if (categoryId === 1) return jsIcon;
+    if (categoryId === 2) return shIcon;
+    if (categoryId === 3) return fxIcon;
+    return null;
+}
 
+// 删除文章逻辑
+const confirmDelete = async (articleId, index) => {
+    // 弹窗确认
+    const result = await Swal.fire({
+        title: '确认删除这篇文章？',
+        text: "删除后无法恢复！",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            // 调用删除接口
+            const res = await deleteArticle(articleId);
+
+            if (res.code === 200) {
+                Swal.fire('删除成功', '文章已被删除', 'success');
+
+                // 更新本地文章列表
+                props.articles.splice(index, 1);
+            } else {
+                Swal.fire('删除失败', res.message || '服务器错误', 'error');
+            }
+        } catch (error) {
+            console.error('删除文章失败:', error);
+            Swal.fire('删除失败', '网络错误或服务器异常', 'error');
+        }
+    }
+};
 </script>
+
 
 
 <style lang="scss" scoped>
@@ -94,6 +136,14 @@ console.log(props.articles); // 在组件中检查数据是否传递正确
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    .del {
+        color: red;
+    }
+
+    .del:hover {
+        color: rgb(141, 25, 25);
+    }
 
     h4 {
         font-size: .9em;

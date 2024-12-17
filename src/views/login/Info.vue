@@ -124,7 +124,9 @@ const saveProfile = async () => {
             throw new Error(response.message);
         }
     } catch (error) {
-        handleError(error, '更新失败');
+        console.log(error.response.data);
+
+        handleError(error, "更新错误");
     }
 };
 
@@ -170,7 +172,7 @@ const handleError = (error, message) => {
     Swal.fire({
         icon: 'error',
         title: message,
-        text: error.response?.message || '无法更新信息，请稍后重试',
+        text: error.response.data.message || '无法更新信息，请稍后重试'
     });
 };
 

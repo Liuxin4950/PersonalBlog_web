@@ -13,6 +13,11 @@ input{
     font-family: "dd";
 
 }
+select{
+    width: 100%;
+    font-family: "dd";
+
+}
 p{
     font-size: .9em;
 }
@@ -23,6 +28,7 @@ a{
 button{
     border: none;
 }
+
 .fit{
     width: 100%;
     height: 100%;
@@ -107,4 +113,96 @@ h4:hover {
     .content {
         width: 100%;
     }
+}
+/* 首页默认框架 */
+
+.content {
+    max-width: 1300px;
+    height: calc(100vh - 70px);
+    margin: 0 auto;
+}
+
+
+main {
+    width: 100%;
+    position: relative;
+
+
+}
+
+.main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+
+}
+
+.el-card {
+    margin-bottom: 2em;
+}
+
+/* 左边窗口 */
+.home-left {
+    width: 72.5%;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-right {
+    width: 25%;
+}
+
+
+.banner-href-box {
+    margin-top: 20px;
+    width: 100%;
+    height: 100px;
+    transform: translateX(20px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.banner-href {
+    margin-right: 2em;
+    padding: 10px;
+    width: 60px;
+    min-width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    background-color: #62dbeeb1;
+    transition: .5s;
+}
+
+.banner-href:hover {
+    background-color: #fff;
+}
+
+.hoverToolbar {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 1000;
+}
+@media screen and (max-width: 1300px) {
+    .content{
+        padding: .5em;
+    }
+}
+@media screen and (max-width: 900px) {
+
+    .main {
+        flex-wrap: wrap;
+    }
+
+    .home-left {
+        width: 100%;
+    }
+
+    .home-right {
+        width: 100%;
+    }
+
 }
