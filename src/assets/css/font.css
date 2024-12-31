@@ -1,6 +1,0 @@
-@font-face {
-    font-family: "dd";
-    src: url('../font/dd.ttf');
-    font-display: fallback;
-    /*  等待短时间，若加载完成则显示，否则显示后备字体。 */
-}
