@@ -27,7 +27,7 @@
                                 <div class="f">{{ new Date(item.created_at).toLocaleDateString('en-CA') }}</div>
                                 <div class="f ac">
                                     <div class="f ac">
-                                        <img class="icon" src="../assets/image/icon/guankan.png" alt="">
+                                        <img class="icon" src="@/assets/image/icon/guankan.png" alt="">
                                         {{ item.view_count }}
                                     </div>
                                 </div>

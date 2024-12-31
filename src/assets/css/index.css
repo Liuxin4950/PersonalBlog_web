@@ -108,20 +108,6 @@ h4:hover {
 }
 
 
-/* 当视口宽度小于 1200px 时，设置 content 宽度为 100% */
-@media screen and (max-width: 1200px) {
-    .content {
-        width: 100%;
-    }
-}
-/* 首页默认框架 */
-
-.content {
-    width: 1300px;
-    height: calc(100vh - 70px);
-    margin: 0 auto;
-}
-
 
 main {
     width: 100%;
@@ -188,6 +174,7 @@ main {
 }
 @media screen and (max-width: 1300px) {
     .content{
+        width: 100%;
         padding:0 .5em;
     }
 }

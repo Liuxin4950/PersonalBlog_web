@@ -62,7 +62,7 @@
 }
 
 .header {
-    width: 100%;
+    width: 100% !important;
     position: relative;
     background: linear-gradient(60deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;

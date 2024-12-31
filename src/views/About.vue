@@ -1,10 +1,7 @@
 <template>
-  <div class="content">
-    <div class="f">
-    </div>
+  <div class="box">
     <!-- 内容区 -->
     <main>
-      <!-- <CurrentPath></CurrentPath> -->
       <h1>我的发布</h1>
 
       <div class="main">
@@ -69,3 +66,41 @@ onMounted(() => {
 })
 
 </script>
+
+<style scoped lang="scss">
+.box {
+  width: 1300px !important;
+  margin: 0 auto;
+}
+
+
+main {
+  width: 100%;
+  position: relative;
+
+
+}
+
+.main {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+
+}
+
+.el-card {
+  margin-bottom: 2em;
+}
+
+/* 左边窗口 */
+.home-left {
+  width: 72.5%;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-right {
+  width: 25%;
+}
+</style>

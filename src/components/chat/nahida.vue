@@ -100,7 +100,7 @@ import { marked } from 'marked';
 // 定义当前激活的页面索引
 const activeIndex = ref(1);
 const ollama = new Ollama({ host: 'http://127.0.0.1:11434' })
-const ServiceUrl = 'http://localhost:8080'
+const ServiceUrl = 'http://47.108.63.126:8080'
 const chatStore = useChatStore();
 const userMessage = ref('');
 let fullResponse = ref('');

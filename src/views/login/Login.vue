@@ -116,8 +116,8 @@ const handleSubmit = async () => {
 
     try {
         const endpoint = isLogin.value
-            ? 'http://localhost:8080/api/users/login'
-            : 'http://localhost:8080/api/users/register';
+            ? 'http://47.108.63.126:8080/api/users/login'
+            : 'http://47.108.63.126:8080/api/users/register';
 
         const payload = {
             username: username.value,
