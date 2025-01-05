@@ -15,12 +15,6 @@
                     <img class="fit" src="@/assets/image/banner/wlcy.jpg" alt="banner image" loading="lazy" />
                 </el-carousel-item>
                 <el-carousel-item>
-                    <img class="fit" src="@/assets/image/banner/world.png" alt="banner image" loading="lazy" />
-                </el-carousel-item>
-                <el-carousel-item>
-                    <img class="fit" src="@/assets/image/banner/sczz.png" alt="banner image" loading="lazy" />
-                </el-carousel-item>
-                <el-carousel-item>
                     <img class="fit" src="@/assets/image/banner/dj.jpg" alt="banner image" loading="lazy" />
                 </el-carousel-item>
             </el-carousel>

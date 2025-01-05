@@ -1,150 +1,131 @@
 #markdown {
-  font-family: sans-serif;
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
   max-width: 800px;
   margin: 0 auto;
+  background: white;
+  border: 2px solid #b3e5fc;
+  border-radius: 12px;
+  padding: 20px;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
 }
 
-/* Header
--------------------- */
+/* Header -------------------- */
 
 #markdown h1, #markdown h2, #markdown h3 {
   cursor: default;
+  font-family: 'Poppins', sans-serif;
+  color: #80cbc4;
+  letter-spacing: 1px;
+  position: relative;
+  padding-left: 10px;
 }
 
 #markdown h1 {
-  margin: 20px 0;
+  margin: 24px 0;
   text-align: center;
+  font-size: 2.75rem;
 }
 
 #markdown h2 {
-  margin: 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #ddd;
-}
-
-#markdown h3 {
-  position: relative;
-  margin: 10px 0;
+  margin: 18px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #80cbc4;
+  font-size: 2rem;
 }
 
 #markdown h3::before {
-  content: "#";
+  content: "🌸";
   position: absolute;
-  top: 0;
-  left: -16px;
-  color: rgb(61, 158, 238);
+  top: -7px;
+  left: -20px;
+  color: #80cbc4;
+  font-size: 1.5rem;
 }
 
-#markdown h4 {
-  margin: 10px 0;
-}
-
-/* Text Formating
--------------------- */
+/* Text Formatting -------------------- */
 
 #markdown p {
-  margin: 12px 0;
+  margin: 16px 0;
+  color: #333;
+  font-size: 1rem;
 }
 
 #markdown code {
   margin: 0 2px;
-  padding: 3px 5px;
-  border-radius: 2px;
-  color: rgb(236, 90, 22);
-  background-color: #eee;
+  padding: 4px 6px;
+  border-radius: 6px;
+  /* background: #75b2ba47; */
+  color: #0f6c74;
+  /* border: 1px solid #80cbc4; */
 }
 
-/* Horizontal Rule
--------------------- */
+/* Horizontal Rule -------------------- */
 
 #markdown hr {
   height: 2px;
-  margin: 16px 0;
+  margin: 20px 0;
   border: none;
-  background-color: #ccc;
+  background: linear-gradient(90deg, #80cbc4, #f48fb1);
 }
 
-/* Cites
--------------------- */
+/* Cites -------------------- */
 
 #markdown blockquote {
-  border-left: 4px solid #0eaeec;
-  padding: 10px 15px;
-  color: #666;
-  background-color: #dbf3fd;
+  border-left: 4px solid #80cbc4;
+  padding: 12px 24px;
+  background: #e0f7fa;
+  color: #333;
 }
 
-/* Table
--------------------- */
-
-#markdown table {
-  border-spacing: 0;
-  border-collapse: collapse;
-}
+/* Table -------------------- */
 
 #markdown table th, #markdown table td {
-  padding: 6px 12px;
-  border: 1px solid #dfe2e5;
+  padding: 10px 16px;
+  border: 1px solid #b3e5fc;
 }
 
 #markdown table tr {
-  background-color: #fff;
+  background-color: #e0f7fa;
 }
 
 #markdown table thead tr, #markdown table tbody tr:nth-child(even) {
-  background-color: #f8f8f8;
+  background: #fce4ec;
 }
 
-/* Code Block
--------------------- */
+/* Code Block -------------------- */
 
 #markdown pre code {
   display: block;
-  padding: 16px 20px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f8f8f8;
-  color: #525252;
-  font-size: 14px;
-  line-height: 22px;
-  white-space: pre;
-  overflow-x: auto;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #80cbc4;
+  background: #fce4ec6c;
+  color: #333;
+  border-radius: 12px;
+  font-size: 0.95rem;
 }
 
-/* List
--------------------- */
-
-#markdown ul {
-  padding-left: 20px;
-  list-style-type: disc;
-}
-
-#markdown ul li {
-  margin: 8px 0;
-}
-
-#markdown ul ul {
-  list-style-type: circle;
-}
-
-#markdown ul ul ul {
-  list-style-type: square;
-}
-
-/* Link
--------------------- */
+/* Link -------------------- */
 
 #markdown a {
-  color: #0eaeec;
+  color: #80cbc4;
   font-weight: bold;
+  text-decoration: none;
 }
 
-/* Image
--------------------- */
+#markdown a:hover {
+  text-decoration: underline;
+  color: #f48fb1;
+}
+
+/* Image -------------------- */
 
 #markdown img {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 16px auto;
+  border-radius: 12px;
+  border: 2px solid #b3e5fc;
+  box-shadow: 0 0 10px rgba(128, 203, 196, 0.5);
 }

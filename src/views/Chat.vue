@@ -75,7 +75,8 @@ const sendMessage = async () => {
 <style scoped>
 .content {
   width: 1300px;
-  min-height: calc(100vh -70px);
+  background-color: white;
+  min-height: calc(100vh - 70px);
 }
 
 /* 聊窗口队列 */
@@ -128,7 +129,8 @@ const sendMessage = async () => {
   /* AI 消息左对齐 */
 }
 
-::v-deep .code {
+/* 用新版的，不然会报错 */
+:deep(.code) {
   background-color: #000;
   color: #fff;
   font-family: monospace;

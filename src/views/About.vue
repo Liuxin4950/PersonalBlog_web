@@ -14,11 +14,7 @@
           <SearchArticles></SearchArticles>
         </div>
       </div>
-
-
     </main>
-
-
 
   </div>
 
@@ -26,7 +22,7 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { getPostList, getPopularArticle } from '../services/postService';  // 引入文章服务模块
+import { getPostList } from '../services/postService';  // 引入文章服务模块
 import Artcles from '@/components/card/Artcles.vue';
 import { useUserStore } from '@/store/userStore';
 const userStore = useUserStore();
